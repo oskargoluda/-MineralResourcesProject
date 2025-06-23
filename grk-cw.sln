@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36212.18 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "grk-cw6", "cw 6\grk-cw6.vcxproj", "{3952C396-B1C6-44CD-96DD-C1AC15D32978}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3952C396-B1C6-44CD-96DD-C1AC15D32978}.Debug|x86.ActiveCfg = Debug|Win32
+		{3952C396-B1C6-44CD-96DD-C1AC15D32978}.Debug|x86.Build.0 = Debug|Win32
+		{3952C396-B1C6-44CD-96DD-C1AC15D32978}.Release|x86.ActiveCfg = Release|Win32
+		{3952C396-B1C6-44CD-96DD-C1AC15D32978}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {AED787C0-0952-4701-A56F-36AB5A5F246A}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pl" xml:lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Lab: Planeta z Atmosfera i Chmurami</title>
+  <style>
+    body { font-family: sans-serif; line-height: 1.6; padding: 20px; max-width: 900px; margin: auto; }
+    h1, h2 { border-bottom: 1px solid #ccc; padding-bottom: 5px; color: #333; }
+    code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 4px; white-space: pre-wrap; font-family: monospace; color: #c7254e;}
+    pre code { display: block; padding: 10px; background-color: #eee; border: 1px solid #ddd; border-radius: 5px; white-space: pre; overflow-x: auto; color: #333; }
+    .task { border-left: 5px solid #007bff; padding-left: 15px; margin-bottom: 15px; background-color: #f8f9fa; padding-top: 10px; padding-bottom: 5px; border-radius: 0 5px 5px 0;}
+    .file { font-weight: bold; color: #dc3545; } /* Red for filenames */
+    .function { font-weight: bold; color: #28a745;} /* Green for functions */
+    .variable { font-weight: bold; color: #17a2b8;} /* Teal for variables/uniforms */
+    .comment-hint { color: #6c757d; font-style: italic; } /* Grey italic for hints */
+    .code-to-add { border: 1px dashed #007bff; background-color: #e7f3ff; margin-top: 5px; margin-bottom: 10px; }
+    .code-to-add pre code { background-color: transparent; border: none;}
+    .code-to-modify { border: 1px dashed #ffc107; background-color: #fff9e7; margin-top: 5px; margin-bottom: 10px; }
+    .code-to-modify pre code { background-color: transparent; border: none;}
+    strong { color: #555; }
+  </style>
+</head>
+<body>
+
+<h1>Lab: Teksturowana Planeta z Atmosfera i Chmurami</h1>
+<p>Witaj w cwiczeniu laboratoryjnym! Zaczynajac od prostego szkieletu kodu C++ i GLSL, krok po kroku zaimplementujesz renderowanie teksturowanej planety, jej atmosfery oraz warstwy chmur, wykorzystujac techniki takie jak blending i (w ostatnim etapie) mapowanie normalnych.</p>
+<p>Twoim glownym zadaniem bedzie dodawanie fragmentow kodu w miejscach oznaczonych komentarzami <code class="comment-hint">// Miejsce na ... (Etap X)</code> w pliku <span class="file">ex_6_1.hpp</span> oraz w odpowiednich plikach shaderow (<span class="file">.vert</span>, <span class="file">.frag</span>). W ostatnim etapie bedziesz rowniez modyfikowac wczesniej dodany kod.</p>
+
+<hr>
+
+<h2 id="etap1">Etap 1: Niebieska Kula (Punkt startowy)</h2>
+<p>Na poczatek skompiluj i uruchom dostarczony kod szkieletowy (<span class="file">ex_6_1.hpp</span>). Powinienes zobaczyc obracajaca sie niebieska kule oraz statek kosmiczny na czarnym tle. Uzywane sa podstawowe shadery <span class="file">shader_5_1.vert</span> i <span class="file">shader_5_1.frag</span> oraz funkcja <code class="function">drawObjectColor</code>.</p>
+<p class="task">
+  <strong>Zadanie:</strong>
+  <ol>
+    <li>Skompiluj i uruchom projekt.</li>
+    <li>Upewnij sie, ze widzisz niebieska kule i statek. Klawisze W, S, A, D, Z, X, Q, E pozwalaja na sterowanie statkiem i kamera.</li>
+    <li>Zapoznaj sie ze struktura kodu, zwlaszcza z funkcjami <code class="function">init</code>, <code class="function">renderScene</code>, <code class="function">drawObjectColor</code> oraz shaderami <span class="file">shader_5_1.vert</span> / <span class="file">.frag</span>.</li>
+  </ol>
+</p>
+<p><img src="img/Stage1.jpg" alt="Etap 1 - niebieska kula" width="500"/></p>
+
+<hr>
+
+<h2 id="etap2">Etap 2: Teksturowana Planeta</h2>
+<p>Zastapimy jednolity niebieski kolor tekstura planety. Wymaga to dodania zmiennych, zaladowania zasobow, zdefiniowania nowej funkcji rysujacej, modyfikacji shaderow do obslugi wspolrzednych tekstur i zmiany wywolania w petli renderowania.</p>
+<p class="task">
+  <strong>Zadanie:</strong>
+  <ol>
+    <li><strong>Dodaj zmienne globalne:</strong> W pliku <span class="file">ex_6_1.hpp</span>, w sekcjach oznaczonych komentarzami:
+        <div class="code-to-add">
+        <p>Dodaj te deklaracje na gorze pliku:</p>
+        <pre><code>// W przestrzeni nazw 'texture' (pod komentarzem '// Miejsce na deklaracje zmiennych tekstur (Etapy 2, 4, 5)')
+GLuint earth;
+
+// Pod deklaracja 'GLuint program;' (pod komentarzem '// Miejsce na deklaracje zmiennych programow shaderow (Etapy 2, 3, 4)')
+GLuint programTex;</code></pre>
+        </div>
+    </li>
+    <li><strong>Zaladuj zasoby:</strong> W pliku <span class="file">ex_6_1.hpp</span>, w funkcji <code class="function">init</code>:
+        <div class="code-to-add">
+        <p>Dodaj te linie w sekcji ladowania shaderow (pod komentarzem <code class="comment-hint">// Miejsce na ladowanie dodatkowych programow shaderow</code>):</p>
+        <pre><code>programTex = shaderLoader.CreateProgram("shaders/shader_5_1_tex.vert", "shaders/shader_5_1_tex.frag"); // Zakladamy dedykowane shadery dla tekstur
+if (programTex == 0) { std::cerr << "Blad ladowania shaderow tekstur!" << std::endl; exit(1); }</code></pre>
+        <p>Dodaj te linie w sekcji ladowania tekstur (pod komentarzem <code class="comment-hint">// Miejsce na ladowanie tekstur</code>):</p>
+        <pre><code>std::cout << "Ladowanie tekstury Ziemi..." << std::endl;
+texture::earth = Core::LoadTexture("textures/Mandalore Legends (Diffuse 4k).png");
+if (texture::earth == 0) { std::cerr << "Blad ladowania tekstury Ziemi!" << std::endl; }</code></pre>
+        </div>
+    </li>
+     <li><strong>Zdefiniuj funkcje rysowania z tekstura:</strong> W pliku <span class="file">ex_6_1.hpp</span>, w miejscu oznaczonym <code class="comment-hint">// Miejsce na definicje funkcji drawObjectTexture (Etap 2)</code>:
+        <div class="code-to-add">
+        <p>Dodaj cala definicje funkcji (zwracajac uwage na tylko jeden parametr tekstury):</p>
+        <pre><code class="function">void drawObjectTexture(Core::RenderContext& context, glm::mat4 modelMatrix, GLuint textureID) {
+    GLuint prog = programTex; // Uzyj programu shaderow dla tekstur
+    glUseProgram(prog);
+
+    glm::mat4 viewProjectionMatrix = createPerspectiveMatrix() * createCameraMatrix();
+    glm::mat4 transformation = viewProjectionMatrix * modelMatrix;
+    glUniformMatrix4fv(glGetUniformLocation(prog, "transformation"), 1, GL_FALSE, (float*)&transformation);
+    glUniformMatrix4fv(glGetUniformLocation(prog, "modelMatrix"), 1, GL_FALSE, (float*)&modelMatrix);
+    glUniform3f(glGetUniformLocation(prog, "lightPos"), -5.f, 3.f, 3.f);
+    glUniform3f(glGetUniformLocation(prog, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
+
+    // Ustawienie tekstury jako aktywnej na jednostce 0
+    Core::SetActiveTexture(textureID, "colorTexture", prog, 0);
+
+    // Miejsce na dodanie aktywacji normal mapy (Etap 5) -> Zostanie dodane w Etapie 5
+
+    Core::DrawContext(context);
+    glUseProgram(0);
+}</code></pre>
+        </div>
+    </li>
+     <li><strong>Zmien wywolanie rysowania planety:</strong> W pliku <span class="file">ex_6_1.hpp</span>, w funkcji <code class="function">renderScene</code>:
+        <div class="code-to-add">
+        <p>Zakomentuj linie:</p>
+        <pre><code>// drawObjectColor(sphereContext, planetModelMatrix, glm::vec3(0.0, 0.3, 1.0));</code></pre>
+        <p>Dodaj te linie w miejscu oznaczonym <code class="comment-hint">// Miejsce na wywolanie rysowania planety z tekstura (Etap 2)</code>:</p>
+        <pre><code>drawObjectTexture(sphereContext, planetModelMatrix, texture::earth);</code></pre>
+        </div>
+    </li>
+    <li><strong>Zmodyfikuj shadery</strong> (np. <span class="file">shader_5_1_tex.vert</span> / <span class="file">.frag</span> lub edytuj bazowe <span class="file">shader_5_1.*</span>):
+      <ul>
+        <li><strong>Vertex Shader</strong> (<span class="file">*.vert</span>):
+            <div class="code-to-add">
+            <p>Dodaj wejscie dla wspolrzednych tekstury (pod <code class="comment-hint">// Miejsce na dodanie wejscia dla wspolrzednych tekstur</code>):</p>
+            <pre><code>layout(location = 2) in vec2 vertexTexCoord;</code></pre>
+            <p>Dodaj wyjscie dla wspolrzednych tekstury (pod <code class="comment-hint">// Miejsce na dodanie wyjscia dla wspolrzednych tekstur</code>):</p>
+            <pre><code>out vec2 texCoord;</code></pre>
+            <p>W funkcji <code class="function">main</code>, dodaj przypisanie (pod <code class="comment-hint">// Miejsce na przekazanie wspolrzednych tekstur</code>):</p>
+            <pre><code>texCoord = vertexTexCoord;</code></pre>
+            </div>
+        </li>
+        <li><strong>Fragment Shader</strong> (<span class="file">*.frag</span>):
+            <div class="code-to-add">
+             <p>Dodaj wejscie dla wspolrzednych tekstury (pod <code class="comment-hint">// Miejsce na dodanie wejscia dla wspolrzednych tekstur</code>):</p>
+            <pre><code>in vec2 texCoord;</code></pre>
+            <p>Dodaj sampler tekstury (pod <code class="comment-hint">// Miejsce na dodanie samplerow tekstur</code>):</p>
+            <pre><code>uniform sampler2D colorTexture;</code></pre>
+            <p>W funkcji <code class="function">main</code>, zastap linie <code class="variable">vec3 surfaceColor = color;</code> tym kodem (pod <code class="comment-hint">// Miejsce na pobranie koloru z tekstury</code>):</p>
+            <pre><code>vec3 surfaceColor = texture(colorTexture, texCoord).rgb;</code></pre>
+            <p>(Upewnij sie, ze dalsze obliczenia <code class="variable">ambient</code> i <code class="variable">diffuse</code> uzywaja <code class="variable">surfaceColor</code>.)</p>
+            </div>
+        </li>
+      </ul>
+    </li>
+     <li><strong>Dodaj sprzatanie zasobow:</strong> W pliku <span class="file">ex_6_1.hpp</span>, w funkcji <code class="function">shutdown</code>:
+        <div class="code-to-add">
+         <p>Dodaj te linie (pod <code class="comment-hint">// Miejsce na usuwanie dodatkowych programow shaderow</code>):</p>
+         <pre><code>shaderLoader.DeleteProgram(programTex);</code></pre>
+         <p>Dodaj te linie (pod <code class="comment-hint">// Miejsce na usuwanie tekstur</code>):</p>
+         <pre><code>glDeleteTextures(1, &texture::earth);</code></pre>
+         </div>
+     </li>
+    <li>Skompiluj i uruchom. Powinienes teraz widziec teksturowana planete.</li>
+  </ol>
+</p>
+<p><img src="img/Stage2.jpg" alt="Etap 2 - teksturowana planeta" width="500"/></p>
+
+<hr>
+
+<h2 id="etap3">Etap 3: Atmosfera</h2>
+<p>Dodamy efekt atmosfery, renderujac druga, wieksza sfere z efektem rozswietlenia krawedzi (rim lighting) przy uzyciu blendingu. Technika blendingu jest wyjaśniona na stronie <a href="https://learnopengl.com/Advanced-OpenGL/Blending" target="_blank" rel="noopener noreferrer">https://learnopengl.com/Advanced-OpenGL/Blending</a>.</p>
+<p class="task">
+    <strong>Zadanie:</strong>
+    <ol>
+        <li><strong>Dodaj zmienna globalna:</strong> W pliku <span class="file">ex_6_1.hpp</span>:
+            <div class="code-to-add">
+            <p>Dodaj deklaracje pod <code class="variable">programTex</code> (pod komentarzem <code class="comment-hint">// Miejsce na deklaracje zmiennych programow shaderow</code>):</p>
+            <pre><code>GLuint programAtm;</code></pre>
+            </div>
+        </li>
+        <li><strong>Zaladuj shader atmosfery:</strong> W pliku <span class="file">ex_6_1.hpp</span>, w funkcji <code class="function">init</code>:
+            <div class="code-to-add">
+            <p>Dodaj te linie pod ladowaniem <code class="variable">programTex</code> (pod komentarzem <code class="comment-hint">// Miejsce na ladowanie dodatkowych programow shaderow</code>):</p>
+            <pre><code>programAtm = shaderLoader.CreateProgram("shaders/shader_5_1_atm.vert", "shaders/shader_5_1_atm.frag"); // Zakladamy dedykowane shadery dla atmosfery
+if (programAtm == 0) { std::cerr << "Blad ladowania shaderow atmosfery!" << std::endl; exit(1); }</code></pre>
+            </div>
+        </li>
+        <li><strong>Zdefiniuj funkcje rysowania atmosfery:</strong> W pliku <span class="file">ex_6_1.hpp</span>, w miejscu oznaczonym <code class="comment-hint">// Miejsce na definicje funkcji drawObjectAtmosphere (Etap 3)</code>:
+            <div class="code-to-add">
+            <p>Dodaj cala definicje funkcji:</p>
+            <pre><code class="function">void drawObjectAtmosphere(Core::RenderContext& context, glm::mat4 modelMatrix) {
+    GLuint prog = programAtm; // Uzyj programu shaderow atmosfery
+    glUseProgram(prog);
+
+    // Wlaczenie blendingu addytywnego
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE); // Kolory beda dodawane
+    glDepthMask(GL_FALSE);      // Nie zapisuj do bufora glebokosci, aby nie zaslonic planety
+
+    glm::mat4 viewProjectionMatrix = createPerspectiveMatrix() * createCameraMatrix();
+    glm::mat4 transformation = viewProjectionMatrix * modelMatrix;
+    glUniformMatrix4fv(glGetUniformLocation(prog, "transformation"), 1, GL_FALSE, (float*)&transformation);
+    glUniformMatrix4fv(glGetUniformLocation(prog, "modelMatrix"), 1, GL_FALSE, (float*)&modelMatrix); // Potrzebne dla normalnych w shaderze
+    glUniform3f(glGetUniformLocation(prog, "lightPos"), -5.f, 3.f, 3.f); // Potrzebne dla sunInfluence
+    glUniform3f(glGetUniformLocation(prog, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z); // Potrzebne dla rim lighting
+
+    // Uniformy specyficzne dla atmosfery
+    glUniform3f(glGetUniformLocation(prog, "atmosphereColor"), 0.35f, 0.57f, 1.0f); // Kolor poswiaty
+    glUniform1f(glGetUniformLocation(prog, "intensity"), 1.5f); // Intensywnosc poswiaty
+
+    Core::DrawContext(context);
+
+    // Wylaczenie blendingu i przywrocenie zapisu do bufora glebokosci
+    glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
+
+    glUseProgram(0);
+}</code></pre>
+            </div>
+        </li>
+        <li><strong>Dodaj wywolanie rysowania atmosfery:</strong> W pliku <span class="file">ex_6_1.hpp</span>, w funkcji <code class="function">renderScene</code>:
+            <div class="code-to-add">
+            <p>Dodaj te linie w miejscu oznaczonym <code class="comment-hint">// Miejsce na wywolanie rysowania atmosfery (Etap 3)</code>:</p>
+            <pre><code>// Atmosfera jest rysowana jako ostatnia (po planecie i chmurach), lekko powiekszona
+glm::mat4 atmosphereModelMatrix = planetModelMatrix * glm::scale(glm::vec3(1.009f));
+drawObjectAtmosphere(sphereContext, atmosphereModelMatrix);</code></pre>
+            </div>
+        </li>
+        <li><strong>Przygotuj shadery atmosfery</strong> (<span class="file">shader_5_1_atm.vert</span> / <span class="file">.frag</span>):
+            <ul>
+                <li><strong>Vertex Shader</strong> (<span class="file">*.vert</span>): Powinien byc podobny do shadera tekstur (Etap 2), przekazujac przynajmniej <code class="variable">worldPos</code> i <code class="variable">vecNormal</code> (interpolowana normalna wierzcholka).</li>
+                <li><strong>Fragment Shader</strong> (<span class="file">*.frag</span>):
+                    <div class="code-to-add">
+                    <p>Dodaj potrzebne uniformy (pod <code class="comment-hint">// Miejsce na dodanie uniformow dla atmosfery</code>):</p>
+                    <pre><code>uniform vec3 cameraPos;
+uniform vec3 lightPos;
+uniform vec3 atmosphereColor;
+uniform float intensity;</code></pre>
+                    <p>W funkcji <code class="function">main</code>, na koncu (pod <code class="comment-hint">// Miejsce na obliczenia dla atmosfery</code>), dodaj logike rim-lightingu modulowana przez swiatlo sloneczne (zamiast <code class="variable">outColor = vec4(finalColor, 1.0);</code>):</p>
+                    <pre><code>// Uzywamy interpolowanej normalnej wierzcholka
+vec3 N = normalize(vecNormal);
+vec3 V = normalize(cameraPos - worldPos); // Wektor do kamery
+vec3 L = normalize(lightPos - worldPos);  // Wektor do swiatla
+
+// Oblicz wspolczynnik rim (poswiaty na krawedzi)
+float dotVN = dot(V, N);
+float rim = 1.0 - dotVN; // 0 w centrum, ~1 na krawedzi
+float glow = pow(clamp(rim, 0.0, 1.0), 3.5); // Kontroluje szerokosc poswiaty
+
+// Oblicz wplyw swiatla slonecznego (przyciemnij nocna strone)
+float sunInfluence = clamp(dot(N, L), 0.0, 1.0);
+
+// Moduluj poswiate przez wplyw slonca
+glow *= sunInfluence;
+
+// Kolor koncowy to kolor atmosfery * poswiata * intensywnosc
+vec3 finalColor = atmosphereColor * glow * intensity;
+
+// Ustaw kolor RGB i alpha (alpha moze byc uzyte do kontroli blendingu)
+// Dla GL_ONE, GL_ONE alpha jest ignorowane, ale ustawienie glow moze byc uzyteczne
+outColor = vec4(finalColor, glow);
+</code></pre>
+                    </div>
+                </li>
+            </ul>
+             Przetestuj również rendering samej atmosfery, w dwóch wersjach: bez blendingu i z blendingiem (zakomentuj/odkomentuj odpowiednie linie w <code class="function">drawObjectAtmosphere</code>).
+        </li>
+         <li><strong>Dodaj sprzatanie zasobow:</strong> W pliku <span class="file">ex_6_1.hpp</span>, w funkcji <code class="function">shutdown</code>:
+            <div class="code-to-add">
+             <p>Dodaj te linie (pod <code class="comment-hint">// Miejsce na usuwanie dodatkowych programow shaderow</code>):</p>
+             <pre><code>shaderLoader.DeleteProgram(programAtm);</code></pre>
+             </div>
+         </li>
+        <li>Skompiluj i uruchom. Powinienes widziec planete z niebieskawa poswiata, ktora jest ciemniejsza po nocnej stronie.</li>
+    </ol>
+</p>
+<p><img src="img/Stage3.jpg" alt="Etap 3 - planeta z atmosfera" width="500"/></p>
+
+<hr>
+
+<h2 id="etap4">Etap 4: Warstwa Chmur</h2>
+<p>Dodamy warstwe chmur miedzy planeta a atmosfera, uzywajac tekstury koloru, z ktorej bedziemy rowniez wyznaczac przezroczystosc. Uzyjemy standardowego alpha blendingu i podstawowego oswietlenia.</p>
+<p class="task">
+    <strong>Zadanie:</strong>
+     <ol>
+        <li><strong>Dodaj zmienne globalne:</strong> W pliku <span class="file">ex_6_1.hpp</span>:
+            <div class="code-to-add">
+            <p>Dodaj deklaracje w przestrzeni nazw <code class="variable">texture</code> (pod <code class="comment-hint">// Miejsce na deklaracje zmiennych tekstur</code>):</p>
+            <pre><code>GLuint clouds; // Tekstura koloru/alpha dla chmur</code></pre>
+             <p>Dodaj deklaracje programu shadera (pod <code class="comment-hint">// Miejsce na deklaracje zmiennych programow shaderow</code>):</p>
+            <pre><code>GLuint programCloud;</code></pre>
+            </div>
+        </li>
+         <li><strong>Zaladuj zasoby chmur:</strong> W pliku <span class="file">ex_6_1.hpp</span>, w funkcji <code class="function">init</code>:
+            <div class="code-to-add">
+            <p>Dodaj ladowanie programu shadera (pod <code class="comment-hint">// Miejsce na ladowanie dodatkowych programow shaderow</code>):</p>
+            <pre><code>programCloud = shaderLoader.CreateProgram("shaders/shader_5_1_cloud.vert", "shaders/shader_5_1_cloud.frag"); // Dedykowane shadery dla chmur
+if (programCloud == 0) { std::cerr << "Blad ladowania shaderow chmur!" << std::endl; exit(1); }</code></pre>
+             <p>Dodaj ladowanie tekstury (pod <code class="comment-hint">// Miejsce na ladowanie tekstur</code>):</p>
+            <pre><code>std::cout << "Ladowanie tekstury chmur..." << std::endl;
+texture::clouds = Core::LoadTexture("textures/Taris (Clouds 4k).png"); // Tekstura koloru i alpha
+if (texture::clouds == 0) { std::cerr << "Blad ladowania tekstury koloru chmur!" << std::endl; }</code></pre>
+            </div>
+        </li>
+        <li><strong>Zdefiniuj funkcje rysowania chmur:</strong> W pliku <span class="file">ex_6_1.hpp</span>, w miejscu oznaczonym <code class="comment-hint">// Miejsce na definicje funkcji drawObjectClouds (Etap 4)</code>:
+             <div class="code-to-add">
+            <p>Dodaj cala definicje funkcji (zwracajac uwage na tylko jeden parametr tekstury):</p>
+            <pre><code class="function">void drawObjectClouds(Core::RenderContext& context, glm::mat4 modelMatrix, GLuint cloudColorTexture) {
+    GLuint prog = programCloud; // Uzyj programu shaderow chmur
+    glUseProgram(prog);
+
+    // Wlaczenie standardowego alpha blendingu
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDepthMask(GL_FALSE); // Nie zapisuj do bufora glebokosci
+
+    glm::mat4 viewProjection = createPerspectiveMatrix() * createCameraMatrix();
+    glm::mat4 transformation = viewProjection * modelMatrix;
+
+    glUniformMatrix4fv(glGetUniformLocation(prog, "transformation"), 1, GL_FALSE, (float*)&transformation);
+    glUniformMatrix4fv(glGetUniformLocation(prog, "modelMatrix"), 1, GL_FALSE, (float*)&modelMatrix);
+    glUniform3f(glGetUniformLocation(prog, "lightPos"), -5.f, 3.f, 3.f); // Dla oswietlenia chmur
+    glUniform3f(glGetUniformLocation(prog, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
+    // Dodaj uniformy, jesli shader ich wymaga (np. shininess)
+    glUniform1f(glGetUniformLocation(prog, "shininess"), 30.0f); // Przykladowa wartosc dla specular
+    // glUniform3f(glGetUniformLocation(prog, "planetCenter"), 0.f, 0.f, 0.f); // Jesli potrzebne
+
+    // Ustawienie tekstury koloru/alpha na jednostce 0
+    Core::SetActiveTexture(cloudColorTexture, "cloudColor", prog, 0);
+
+    Core::DrawContext(context);
+
+    // Wylaczenie blendingu i przywrocenie zapisu glebokosci
+    glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
+
+    glUseProgram(0);
+}</code></pre>
+            </div>
+        </li>
+         <li><strong>Dodaj wywolanie rysowania chmur:</strong> W pliku <span class="file">ex_6_1.hpp</span>, w funkcji <code class="function">renderScene</code>:
+            <div class="code-to-add">
+            <p>Dodaj te linie w miejscu oznaczonym <code class="comment-hint">// Miejsce na wywolanie rysowania chmur (Etap 4)</code> (WAZNE: przed rysowaniem atmosfery):</p>
+            <pre><code>// Chmury rysowane po planecie, przed atmosfera, z wlasna rotacja i skala
+glm::mat4 cloudModelMatrix = glm::rotate(time * 0.05f, glm::vec3(0, 1, 0)) // Wolniejsza rotacja chmur
+                           * planetModelMatrix // Bazuj na transformacji planety
+                           * glm::scale(glm::vec3(1.005f)); // Skala miedzy planeta a atmosfera
+drawObjectClouds(sphereContext, cloudModelMatrix, texture::clouds); // Przekaz tylko teksture koloru/alpha</code></pre>
+            </div>
+        </li>
+        <li><strong>Przygotuj shadery chmur</strong> (<span class="file">shader_5_1_cloud.vert</span> / <span class="file">.frag</span>):
+             <ul>
+                <li><strong>Vertex Shader</strong> (<span class="file">*.vert</span>): Powinien przekazywac <code class="variable">worldPos</code>, <code class="variable">vecNormal</code> (interpolowana normalna wierzcholka) i <code class="variable">texCoord</code>.</li>
+                <li><strong>Fragment Shader</strong> (<span class="file">*.frag</span>):
+                    <div class="code-to-add">
+                    <p>Dodaj sampler dla tekstury koloru i uniform shininess (pod <code class="comment-hint">// Miejsce na dodanie samplerow tekstur</code>):</p>
+                    <pre><code>uniform sampler2D cloudColor;
+uniform float shininess = 30.0;
+// uniform vec3 planetCenter; // Jesli potrzebne</code></pre>
+                    <p>W funkcji <code class="function">main</code>, na koncu (pod <code class="comment-hint">// Miejsce na obliczenia dla chmur</code>), dodaj logike probkowania, oswietlenia i alpha blendingu (zamiast <code class="variable">outColor = vec4(finalColor, 1.0);</code>):</p>
+                    <pre><code>// Uzyj interpolowanej normalnej wierzcholka (worldNormal) na razie
+// W Etapie 5 zostanie ona zastapiona normalna z mapy
+vec3 N = normalize(vecNormal);
+vec3 L = normalize(lightPos - worldPos);
+vec3 V = normalize(cameraPos - worldPos);
+vec3 H = normalize(L + V); // Halfway vector dla specular
+
+// === Diffuse Lighting ===
+// Wplyw swiatla slonecznego na podstawie normalnej wierzcholka
+float sunInfluence = clamp(dot(N, L), 0.0, 1.0);
+
+// === Specular Lighting ===
+// Podstawowy specular na podstawie normalnej wierzcholka
+float spec = pow(max(dot(N, H), 0.0), shininess);
+vec3 specularColor = vec3(1.0) * spec * sunInfluence * 0.3; // Zmniejszona intensywnosc
+
+// === Cloud Shading & Alpha ===
+vec4 cloudSample = texture(cloudColor, texCoord); // Probkujemy raz dla koloru i alpha
+vec3 cloudTex = cloudSample.rgb;
+// Oswietlenie chmury (ambient + diffuse)
+// Uzyj stalej AMBIENT zdefiniowanej wczesniej w shaderze
+vec3 cloudLit = cloudTex * (AMBIENT + sunInfluence);
+
+// Polacz oswietlenie diffuse/ambient i specular
+vec3 finalColor = cloudLit + specularColor;
+
+// === Alpha control ===
+// Uzyj kanalu alpha bezposrednio z tekstury
+float finalAlpha = cloudSample.a;
+
+// Zwieksz jasnosc i ustaw alpha
+outColor = vec4(finalColor * 2.5, finalAlpha * 0.8);
+</code></pre>
+                    </div>
+                 </li>
+            </ul>
+        </li>
+        <li><strong>Dodaj sprzatanie zasobow:</strong> W pliku <span class="file">ex_6_1.hpp</span>, w funkcji <code class="function">shutdown</code>:
+            <div class="code-to-add">
+             <p>Dodaj usuwanie programu (pod <code class="comment-hint">// Miejsce na usuwanie dodatkowych programow shaderow</code>):</p>
+             <pre><code>shaderLoader.DeleteProgram(programCloud);</code></pre>
+              <p>Dodaj usuwanie tekstury (pod <code class="comment-hint">// Miejsce na usuwanie tekstur</code>):</p>
+             <pre><code>glDeleteTextures(1, &texture::clouds);</code></pre>
+             </div>
+         </li>
+        <li>Skompiluj i uruchom. Powinienes widziec warstwe przezroczystych, oswietlonych chmur nad planeta.</li>
+    </ol>
+</p>
+<p><img src="img/stage4.jpg" alt="Etap 4 - planeta z chmurami" width="500"/></p>
+
+<hr>
+
+<h2 id="etap5">Etap 5: Mapowanie Normalnych (Normal Mapping)</h2>
+<p>W tym etapie dodamy mapowanie normalnych do planety (i opcjonalnie do chmur), aby uzyskac bardziej szczegolowe oswietlenie powierzchni. Bedziemy musieli zaladowac odpowiednie tekstury (mapy normalnych/bump), zmodyfikowac istniejace funkcje rysujace i ich wywolania w <code class="function">renderScene</code>, oraz rozszerzyc shadery o obsluge wektorow stycznych (tangent), bitangentnych (bitangent) i macierzy TBN. Technika mapowania normalnych jest wyjaśniona (w języku angielskim) na stronie <a href="https://learnopengl.com/Advanced-Lighting/Normal-Mapping" target="_blank" rel="noopener noreferrer">https://learnopengl.com/Advanced-Lighting/Normal-Mapping</a>.</p>
+<p class="task">
+    <strong>Zadanie (dla planety):</strong>
+     <ol>
+        <li><strong>Dodaj zmienne globalne dla map normalnych/bump:</strong> W pliku <span class="file">ex_6_1.hpp</span>:
+            <div class="code-to-add">
+            <p>Dodaj te deklaracje w przestrzeni nazw <code class="variable">texture</code> (pod <code class="comment-hint">// Miejsce na deklaracje zmiennych tekstur</code>, obok istniejacych):</p>
+            <pre><code>GLuint earthNormal; // Mapa normalnych/bump dla Ziemi
+GLuint cloudsT;     // Mapa normalnych/bump dla chmur</code></pre>
+            </div>
+        </li>
+         <li><strong>Zaladuj mapy normalnych/bump:</strong> W pliku <span class="file">ex_6_1.hpp</span>, w funkcji <code class="function">init</code>:
+             <div class="code-to-add">
+             <p>Dodaj ladowanie tekstur (pod <code class="comment-hint">// Miejsce na ladowanie tekstur</code>, obok istniejacych):</p>
+            <pre><code>std::cout << "Ladowanie mapy normalnych Ziemi..." << std::endl;
+texture::earthNormal = Core::LoadTexture("textures/Mandalore Legends (Bump 4k).png");
+if (texture::earthNormal == 0) { std::cerr << "Blad ladowania mapy normalnych Ziemi!" << std::endl; }
+
+std::cout << "Ladowanie mapy bump/normal chmur..." << std::endl;
+texture::cloudsT = Core::LoadTexture("textures/Taris (Clouds Bump 4k).png");
+if (texture::cloudsT == 0) { std::cerr << "Blad ladowania mapy bump/normal chmur!" << std::endl; }</code></pre>
+             <p><strong>Wazne:</strong> Upewnij sie ponownie, ze w funkcji <code class="function">loadModelToContext</code> jest uzywana flaga <code class="variable">aiProcess_CalcTangentSpace</code> przy wywolaniu <code class="function">import.ReadFile</code>.</p>
+            </div>
+        </li>
+        <li><strong>Zmodyfikuj funkcje rysowania planety (<code class="function">drawObjectTexture</code>):</strong> W pliku <span class="file">ex_6_1.hpp</span>:
+            <div class="code-to-modify">
+            <p>Zmodyfikuj istniejaca funkcje <code class="function">drawObjectTexture</code>, dodajac drugi parametr tekstury i aktywujac mape normalnych:</p>
+            <pre><code class="function">// Zmien sygnature, dodajac parametr normalMapTextureID
+void drawObjectTexture(Core::RenderContext& context, glm::mat4 modelMatrix, GLuint colorTextureID, GLuint normalMapTextureID) {
+    GLuint prog = programTex;
+    glUseProgram(prog);
+
+    // ... (reszta uniformow bez zmian) ...
+    glUniformMatrix4fv(glGetUniformLocation(prog, "transformation"), 1, GL_FALSE, (float*)&transformation);
+    glUniformMatrix4fv(glGetUniformLocation(prog, "modelMatrix"), 1, GL_FALSE, (float*)&modelMatrix);
+    glUniform3f(glGetUniformLocation(prog, "lightPos"), -5.f, 3.f, 3.f);
+    glUniform3f(glGetUniformLocation(prog, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
+
+
+    // Ustawienie tekstury koloru na jednostce 0
+    Core::SetActiveTexture(colorTextureID, "colorTexture", prog, 0);
+
+    // Dodaj aktywacje normal mapy na jednostce 1
+    Core::SetActiveTexture(normalMapTextureID, "normalMap", prog, 1);
+
+    Core::DrawContext(context);
+    glUseProgram(0);
+}</code></pre>
+            </div>
+        </li>
+         <li><strong>Zmodyfikuj wywolanie rysowania planety (<code class="function">renderScene</code>):</strong> W pliku <span class="file">ex_6_1.hpp</span>:
+             <div class="code-to-modify">
+             <p>Zmodyfikuj istniejace wywolanie <code class="function">drawObjectTexture</code>, dodajac <code class="variable">texture::earthNormal</code> jako drugi argument tekstury:</p>
+            <pre><code>// Zmienione wywolanie dla planety
+drawObjectTexture(sphereContext, planetModelMatrix, texture::earth, texture::earthNormal);</code></pre>
+            </div>
+         </li>
+        <li><strong>Zmodyfikuj Vertex Shader planety</strong> (np. <span class="file">shader_5_1_tex.vert</span>):
+             <div class="code-to-add">
+            <p>Dodaj wejscia dla Tangent i Bitangent (pod <code class="comment-hint">// Miejsce na dodanie wejscia dla TBN</code>):</p>
+            <pre><code>layout(location = 3) in vec3 vertexTangent;
+layout(location = 4) in vec3 vertexBitangent;</code></pre>
+             <p>Dodaj wyjscie dla macierzy TBN (pod <code class="comment-hint">// Miejsce na dodanie wyjscia dla macierzy TBN</code>):</p>
+            <pre><code>out mat3 TBN;</code></pre>
+             <p>W funkcji <code class="function">main</code>, dodaj obliczenia TBN (pod <code class="comment-hint">// Miejsce na obliczenie i przekazanie macierzy TBN</code>):</p>
+            <pre><code>// Transformacja wektorow T, B, N (bazowych normalnych wierzcholka) do przestrzeni swiata
+vec3 T = normalize(mat3(modelMatrix) * vertexTangent);
+vec3 B = normalize(mat3(modelMatrix) * vertexBitangent);
+vec3 N_vert = normalize(mat3(modelMatrix) * vertexNormal);
+// Stworz macierz TBN (kolumnowo)
+TBN = mat3(T, B, N_vert);</code></pre>
+            </div>
+        </li>
+        <li><strong>Zmodyfikuj Fragment Shader planety</strong> (np. <span class="file">shader_5_1_tex.frag</span>):
+            <div class="code-to-add">
+             <p>Dodaj wejscie dla macierzy TBN (pod <code class="comment-hint">// Miejsce na dodanie wejscia dla macierzy TBN</code>):</p>
+            <pre><code>in mat3 TBN;</code></pre>
+             <p>Dodaj sampler mapy normalnych (pod <code class="comment-hint">// Miejsce na dodanie samplerow tekstur</code>):</p>
+            <pre><code>uniform sampler2D normalMap;</code></pre>
+             <p>W funkcji <code class="function">main</code>, zastap linie <code class="variable">vec3 N = normalize(vecNormal);</code> tym kodem (pod <code class="comment-hint">// Miejsce na obliczenie normalnej z mapy normalnych</code>):</p>
+            <pre><code>// Pobierz normalna z mapy (jest w zakresie [0,1])
+vec3 tangentNormal = texture(normalMap, texCoord).rgb;
+// Przeksztalc ja do zakresu [-1, 1]
+tangentNormal = normalize(tangentNormal * 2.0 - 1.0);
+// Przeksztalc normalna z przestrzeni stycznej (tangent space) do przestrzeni swiata za pomoca TBN
+vec3 N = normalize(TBN * tangentNormal);</code></pre>
+             <p>(Dalsze obliczenia oswietlenia beda teraz uzywac <code class="variable">N</code> z mapy normalnych.)</p>
+             </div>
+        </li>
+         <li><strong>Dodaj sprzatanie zasobow:</strong> W pliku <span class="file">ex_6_1.hpp</span>, w funkcji <code class="function">shutdown</code>:
+            <div class="code-to-add">
+              <p>Dodaj usuwanie tekstur normalnych/bump (pod <code class="comment-hint">// Miejsce na usuwanie tekstur</code>):</p>
+             <pre><code>glDeleteTextures(1, &texture::earthNormal);
+glDeleteTextures(1, &texture::cloudsT);</code></pre>
+             </div>
+         </li>
+        <li>Skompiluj i uruchom. Oswietlenie planety powinno byc znacznie bardziej szczegolowe.</li>
+        <li><strong>(Opcjonalnie) Zastosuj mapowanie normalnych do chmur:</strong>
+            <ul>
+                <li><strong>Zmodyfikuj <code class="function">drawObjectClouds</code> w C++:</strong> Dodaj drugi parametr `GLuint cloudNormalTextureID` do sygnatury. Wewnatrz funkcji dodaj wywolanie `Core::SetActiveTexture(cloudNormalTextureID, "cloudNormal", prog, 1);`.</li>
+                <li><strong>Zmodyfikuj wywolanie <code class="function">drawObjectClouds</code> w C++ (<code class="function">renderScene</code>):</strong> Dodaj `texture::cloudsT` jako drugi argument tekstury.</li>
+                <li><strong>Zmodyfikuj <span class="file">shader_5_1_cloud.vert</span>:</strong> Dodaj wejscia `vertexTangent`, `vertexBitangent` (location 3, 4), wyjscie `out mat3 TBN;` i obliczenia macierzy TBN w `main`, analogicznie jak dla planety.</li>
+                <li><strong>Zmodyfikuj <span class="file">shader_5_1_cloud.frag</span>:</strong>
+                    <div class="code-to-modify">
+                        <p>Dodaj wejscie `in mat3 TBN;`. Dodaj sampler `uniform sampler2D cloudNormal;`. W `main` zastap linie `vec3 N = normalize(vecNormal);` obliczeniami normalnej z mapy, tak jak dla planety, ale uzywajac samplera `cloudNormal`.</p>
+                        <p>Przyklad zaktualizowanego shadera fragmentow dla chmur (bazujacy na uproszczonym przykladzie uzytkownika):</p>
+                        <pre><code>#version 430 core
+
+in vec3 worldPos;
+// in vec3 worldNormal; // Juz niepotrzebne, jesli uzywamy normal mapy
+in vec2 texCoord;
+in mat3 TBN; // Wejscie z vertex shadera
+
+out vec4 fragColor;
+
+// uniform vec3 planetCenter; // Prawdopodobnie niepotrzebne
+uniform vec3 lightPos;
+uniform vec3 cameraPos;
+
+uniform sampler2D cloudColor;
+uniform sampler2D cloudNormal; // Sampler dla mapy normalnych chmur
+
+uniform float shininess = 30.0; // Kontrola specular
+
+const float AMBIENT = 0.1; // Stala ambient
+
+void main() {
+    vec2 uv = texCoord;
+
+    // === Normal Mapping ===
+    vec3 tangentNormal = texture(cloudNormal, uv).rgb;
+    tangentNormal = normalize(tangentNormal * 2.0 - 1.0);
+    // Uzywamy normalnej z mapy zamiast interpolowanej normalnej wierzcholka
+    vec3 N = normalize(TBN * tangentNormal); // Nazywamy ja N dla spojnosci
+
+    // === Lighting vectors ===
+    vec3 L = normalize(lightPos - worldPos);
+    vec3 V = normalize(cameraPos - worldPos);
+    vec3 H = normalize(L + V); // Halfway vector
+
+    // === Diffuse Lighting ===
+    float sunInfluence = clamp(dot(N, L), 0.0, 1.0);
+
+    // === Specular Lighting ===
+    float spec = pow(max(dot(N, H), 0.0), shininess);
+    vec3 specularColor = vec3(1.0) * spec * sunInfluence * 0.3;
+
+    // === Cloud Shading & Alpha ===
+    vec4 cloudSample = texture(cloudColor, uv); // Probkujemy raz dla koloru i alpha
+    vec3 cloudTex = cloudSample.rgb;
+    vec3 cloudLit = cloudTex * (AMBIENT + sunInfluence); // Proste oswietlenie
+
+    // Usunieto Fake occlusion
+
+    vec3 finalColor = cloudLit + specularColor;
+
+    // === Alpha control ===
+    float finalAlpha = cloudSample.a; // Uzyj alpha z tekstury
+
+    fragColor = vec4(finalColor * 2.5, finalAlpha * 0.8);
+}
+</code></pre>
+                    </div>
+                </li>
+            </ul>
+        </li>
+    </ol>
+</p>
+<p><img src="img/stage5.jpg" alt="Etap 5 - planeta z mapowaniem normalnych" width="500"/></p>
+
+<hr>
+
+<h2 id="final">Podsumowanie</h2>
+<p>Gratulacje! Po wykonaniu wszystkich etapow powinnienes widziec w pelni funkcjonalna scene z:</p>
+<ul>
+  <li>Teksturowana planeta z realistycznym oswietleniem dzieki mapowaniu normalnych.</li>
+  <li>Atmosfera dajaca efekt poswiaty na krawedziach.</li>
+  <li>Polprzezroczysta warstwa chmur poruszajaca sie niezaleznie (opcjonalnie z mapowaniem normalnych).</li>
+  <li>Statkiem kosmicznym, ktorym mozesz sterowac.</li>
+</ul>
+
+<h2 id="bonus">Zadanie dodatkowe *</h2>
+<p>Jesli masz czas i checi, sprobuj rozszerzyc projekt:</p>
+<ul>
+  <li>Dodaj druga planete (np. ksiezyc) z inna tekstura, mapa normalnych i innym kolorem/intensywnoscia atmosfery (jesli ja dodasz).</li>
+  <li>Nadaj ksiezycowi ruch orbitalny wokol glownej planety.</li>
+  <li>Zastosuj mapowanie normalnych rowniez do statku kosmicznego.</li>
+  <li>Zaladuj i wykorzystaj inne mapy tekstur (np. mape specular, mape emisyjna dla swiatel miast po nocnej stronie planety) i zmodyfikuj shadery, aby je wykorzystac.</li>
+  <li>Pobierz tekstury dla innych planet/ksiezycow (np. z <a href="https://www.solarsystemscope.com/textures/" target="_blank" rel="noopener noreferrer">solarsystemscope.com</a>) i stworz maly uklad planetarny.</li>
+</ul>
+
+</body>
+</html>
