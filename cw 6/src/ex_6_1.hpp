@@ -24,6 +24,16 @@ int wybranaKostka = -1; // -1 oznacza brak wyboru
 GLuint modelVao, modelVbo;
 std::vector<float> modelVertices;
 bool loadObjModel(const std::string& path, std::vector<float>& vertices);
+GLuint klodawaVao, klodawaVbo;
+std::vector<float> klodawaVertices;
+GLuint teksturaKlodawa;
+
+
+glm::vec3 kameraLegnica = glm::vec3(1.0f, 1.0f, 1.0f);
+glm::vec3 kameraKlodawa = glm::vec3(-5.0f, 1.0f, 1.0f);
+glm::vec3 celLegnica = glm::vec3(0.0f, 0.0f, 0.0f);
+glm::vec3 celKlodawa = glm::vec3(-5.0f, 0.0f, 0.0f);
+
 
 void init(GLFWwindow* win) {
     int w, h;
@@ -58,6 +68,25 @@ void init(GLFWwindow* win) {
 
     program = loader.CreateProgram("shaders/shader_5_1.vert", "shaders/shader_5_1.frag");
     tekstura = Core::LoadTexture("textures/Legnica-Glogow.png");
+    if (!loadObjModel("models/Klodawa.obj", klodawaVertices)) {
+        std::cerr << "Nie udało się załadować modelu Kłodawa!" << std::endl;
+        exit(1);
+    }
+
+    glGenVertexArrays(1, &klodawaVao);
+    glGenBuffers(1, &klodawaVbo);
+
+    glBindVertexArray(klodawaVao);
+    glBindBuffer(GL_ARRAY_BUFFER, klodawaVbo);
+    glBufferData(GL_ARRAY_BUFFER, klodawaVertices.size() * sizeof(float), klodawaVertices.data(), GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0); glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float))); glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float))); glEnableVertexAttribArray(2);
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(9 * sizeof(float))); glEnableVertexAttribArray(3);
+    glBindVertexArray(0);
+
+    teksturaKlodawa = Core::LoadTexture("textures/Klodawa.png");
 }
 
 void renderScene(GLFWwindow* win) {
@@ -65,7 +94,15 @@ void renderScene(GLFWwindow* win) {
     //kamera.x = 10.0f * cos(t / 2.0f);
     //kamera.z = 10.0f * sin(t / 2.0f);
     //kamera.y = 7.0f;
-    kamera = glm::vec3(1.0f, 1.0f, 1.0f);
+    //kamera = glm::vec3(1.0f, 1.0f, 1.0f);
+    if (wybranaKostka == 1) {
+        kamera = kameraKlodawa;
+        cel = celKlodawa;
+    }
+    else {
+        kamera = kameraLegnica;
+        cel = celLegnica;
+    }
     glClearColor(0.4f, 0.4f, 0.4f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -109,12 +146,25 @@ void renderScene(GLFWwindow* win) {
     glUniform3f(baseColorLoc, 1.0f, 1.0f, 1.0f);
 
     glBindVertexArray(vao);
+    // ------------------ RENDER LEGNICA ---------------------
     glBindVertexArray(modelVao);
-    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, tekstura);
-    glUniform1i(glGetUniformLocation(program, "diffuseTexture"), 0);
-
     glDrawArrays(GL_TRIANGLES, 0, modelVertices.size() / 11);
+
+    // ------------------ RENDER KLODAWA ---------------------
+    glm::mat4 modelKlodawa = glm::mat4(1.0f);
+    modelKlodawa = glm::translate(modelKlodawa, glm::vec3(-5.0f, 0.0f, 0.0f)); // przesuń Kłodawę w bok
+    modelKlodawa = glm::rotate(modelKlodawa, t / 4, glm::vec3(0, 1, 0)); // opcjonalny obrót
+
+    glm::mat4 mvKlodawa = projekt * widok * modelKlodawa;
+
+    glUniformMatrix4fv(transformLoc, 1, GL_FALSE, &mvKlodawa[0][0]);
+    glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &modelKlodawa[0][0]);
+
+    glBindVertexArray(klodawaVao);
+    glBindTexture(GL_TEXTURE_2D, teksturaKlodawa);
+    glDrawArrays(GL_TRIANGLES, 0, klodawaVertices.size() / 11);
+
 
     glBindVertexArray(0);
     glUseProgram(0);
@@ -125,6 +175,9 @@ void shutdown(GLFWwindow*) {
     glDeleteVertexArrays(1, &vao);
     glDeleteBuffers(1, &vbo);
     glDeleteTextures(1, &tekstura);
+    glDeleteVertexArrays(1, &klodawaVao);
+    glDeleteBuffers(1, &klodawaVbo);
+    glDeleteTextures(1, &teksturaKlodawa);
     loader.DeleteProgram(program);
 
 }
