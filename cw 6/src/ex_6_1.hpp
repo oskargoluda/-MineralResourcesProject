@@ -51,9 +51,9 @@ const float MIN_DISTANCE = 1.0f;
 const float MAX_DISTANCE = 4.0f;     
 const float MIN_ELEVATION = -80.0f; 
 const float MAX_ELEVATION = 80.0f;  
-const float CAMERA_ROTATION_SPEED = 0.8f;   
-const float CAMERA_ELEVATION_SPEED = 0.8f;  
-const float CAMERA_ZOOM_SPEED = 0.02f;       
+const float CAMERA_ROTATION_SPEED = 0.01f; 
+const float CAMERA_ELEVATION_SPEED = 0.01f; 
+const float CAMERA_ZOOM_SPEED = 0.05f;
 
 bool loadObjModel(const std::string& path, std::vector<float>& vertices);
 
@@ -209,10 +209,10 @@ void init(GLFWwindow* win) {
     glBindVertexArray(0);
 
     program = loader.CreateProgram("shaders/shader_5_1.vert", "shaders/shader_5_1.frag");
-    tekstura = Core::LoadTexture("textures/Legnica-Glogow.png");
-    teksturaKlodawa = Core::LoadTexture("textures/Klodawa.png");
-    teksturaMelgiew = Core::LoadTexture("textures/Melgiew.png");
-    teksturaAdamow = Core::LoadTexture("textures/Adamow.png");
+    tekstura = Core::LoadTexture("textures/Legnica-Glogow2.png");
+    teksturaKlodawa = Core::LoadTexture("textures/Klodawa2.png");
+    teksturaMelgiew = Core::LoadTexture("textures/Melgiew2.png");
+    teksturaAdamow = Core::LoadTexture("textures/Adamow2.png");
 }
 
 void renderScene(GLFWwindow* win) {
@@ -420,6 +420,13 @@ void processInput(GLFWwindow* win) {
     if (glfwGetKey(win, GLFW_KEY_2) == GLFW_PRESS) wybranaKostka = 1;
     if (glfwGetKey(win, GLFW_KEY_3) == GLFW_PRESS) wybranaKostka = 2;
     if (glfwGetKey(win, GLFW_KEY_4) == GLFW_PRESS) wybranaKostka = 3;
+    glfwSetScrollCallback(win, [](GLFWwindow* window, double xoffset, double yoffset) {
+        cameraDistance -= yoffset * CAMERA_ZOOM_SPEED;
+
+        // Ograniczenia
+        if (cameraDistance < MIN_DISTANCE) cameraDistance = MIN_DISTANCE;
+        if (cameraDistance > MAX_DISTANCE) cameraDistance = MAX_DISTANCE;
+        });
 
     // obrot wokol obiektu (lewo/prawo)
     if (glfwGetKey(win, GLFW_KEY_A) == GLFW_PRESS) cameraAzimuth -= CAMERA_ROTATION_SPEED;
