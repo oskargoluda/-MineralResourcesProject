@@ -27,6 +27,17 @@ bool loadObjModel(const std::string& path, std::vector<float>& vertices);
 GLuint klodawaVao, klodawaVbo;
 std::vector<float> klodawaVertices;
 GLuint teksturaKlodawa;
+GLuint melgiewVao, melgiewVbo, teksturaMelgiew;
+std::vector<float> melgiewVertices;
+
+GLuint adamowVao, adamowVbo, teksturaAdamow;
+std::vector<float> adamowVertices;
+
+glm::vec3 kameraMelgiew = glm::vec3(5.0f, 1.0f, 1.0f);
+glm::vec3 celMelgiew = glm::vec3(5.0f, 0.0f, 0.0f);
+
+glm::vec3 kameraAdamow = glm::vec3(10.0f, 1.0f, 1.0f);
+glm::vec3 celAdamow = glm::vec3(10.0f, 0.0f, 0.0f);
 
 
 glm::vec3 kameraLegnica = glm::vec3(1.0f, 1.0f, 1.0f);
@@ -36,6 +47,7 @@ glm::vec3 celKlodawa = glm::vec3(-5.0f, 0.0f, 0.0f);
 
 
 void init(GLFWwindow* win) {
+
     int w, h;
     glfwGetFramebufferSize(win, &w, &h);
     aspekt = w / float(h);
@@ -51,7 +63,6 @@ void init(GLFWwindow* win) {
         std::cerr << "Nie udało się załadować modelu!" << std::endl;
         exit(1);
     }
-
     glGenVertexArrays(1, &modelVao);
     glGenBuffers(1, &modelVbo);
 
@@ -72,7 +83,6 @@ void init(GLFWwindow* win) {
         std::cerr << "Nie udało się załadować modelu Kłodawa!" << std::endl;
         exit(1);
     }
-
     glGenVertexArrays(1, &klodawaVao);
     glGenBuffers(1, &klodawaVbo);
 
@@ -87,6 +97,42 @@ void init(GLFWwindow* win) {
     glBindVertexArray(0);
 
     teksturaKlodawa = Core::LoadTexture("textures/Klodawa.png");
+    // ---- MELGIEW ----
+    if (!loadObjModel("models/Melgiew.obj", melgiewVertices)) {
+        std::cerr << "Nie udało się załadować modelu Melgiew!" << std::endl;
+        exit(1);
+    }
+    glGenVertexArrays(1, &melgiewVao);
+    glGenBuffers(1, &melgiewVbo);
+    glBindVertexArray(melgiewVao);
+    glBindBuffer(GL_ARRAY_BUFFER, melgiewVbo);
+    glBufferData(GL_ARRAY_BUFFER, melgiewVertices.size() * sizeof(float), melgiewVertices.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0); glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float))); glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float))); glEnableVertexAttribArray(2);
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(9 * sizeof(float))); glEnableVertexAttribArray(3);
+    glBindVertexArray(0);
+    teksturaMelgiew = Core::LoadTexture("textures/Melgiew.png");
+    if (teksturaMelgiew == 0) std::cerr << "Nie wczytano tekstury Melgiew" << std::endl;
+    std::cerr << "test" << std::endl;
+
+    // ---- ADAMOW ----
+    if (!loadObjModel("models/Adamow.obj", adamowVertices)) {
+        std::cerr << "Nie udało się załadować modelu Adamow!" << std::endl;
+        exit(1);
+    }
+    glGenVertexArrays(1, &adamowVao);
+    glGenBuffers(1, &adamowVbo);
+    glBindVertexArray(adamowVao);
+    glBindBuffer(GL_ARRAY_BUFFER, adamowVbo);
+    glBufferData(GL_ARRAY_BUFFER, adamowVertices.size() * sizeof(float), adamowVertices.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0); glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float))); glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float))); glEnableVertexAttribArray(2);
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(9 * sizeof(float))); glEnableVertexAttribArray(3);
+    glBindVertexArray(0);
+    teksturaAdamow = Core::LoadTexture("textures/Adamow.png");
+
 }
 
 void renderScene(GLFWwindow* win) {
@@ -95,14 +141,29 @@ void renderScene(GLFWwindow* win) {
     //kamera.z = 10.0f * sin(t / 2.0f);
     //kamera.y = 7.0f;
     //kamera = glm::vec3(1.0f, 1.0f, 1.0f);
-    if (wybranaKostka == 1) {
-        kamera = kameraKlodawa;
-        cel = celKlodawa;
-    }
-    else {
+    switch (wybranaKostka) {
+    case 0:
         kamera = kameraLegnica;
         cel = celLegnica;
+        break;
+    case 1:
+        kamera = kameraKlodawa;
+        cel = celKlodawa;
+        break;
+    case 2:
+        kamera = kameraMelgiew;
+        cel = celMelgiew;
+        break;
+    case 3:
+        kamera = kameraAdamow;
+        cel = celAdamow;
+        break;
+    default:
+        kamera = kameraLegnica;
+        cel = celLegnica;
+        break;
     }
+
     glClearColor(0.4f, 0.4f, 0.4f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -133,37 +194,60 @@ void renderScene(GLFWwindow* win) {
     };
     glUniform1i(numLightsLoc, 6);
     glUniform3fv(lightDirsLoc, 6, &lightDirs[0][0]);
-
+    // ------------------ RENDER LEGNICA ---------------------
     glm::mat4 model = glm::mat4(1.0f);
-
-    // Dodaj obrót wokół osi Y względem czasu
     model = glm::rotate(model, t / 4, glm::vec3(0, 1, 0));
-
     glm::mat4 mv = projekt * widok * model;
     glUniformMatrix4fv(transformLoc, 1, GL_FALSE, &mv[0][0]);
     glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &model[0][0]);
-
     glUniform3f(baseColorLoc, 1.0f, 1.0f, 1.0f);
-
     glBindVertexArray(vao);
-    // ------------------ RENDER LEGNICA ---------------------
     glBindVertexArray(modelVao);
     glBindTexture(GL_TEXTURE_2D, tekstura);
     glDrawArrays(GL_TRIANGLES, 0, modelVertices.size() / 11);
 
     // ------------------ RENDER KLODAWA ---------------------
     glm::mat4 modelKlodawa = glm::mat4(1.0f);
-    modelKlodawa = glm::translate(modelKlodawa, glm::vec3(-5.0f, 0.0f, 0.0f)); // przesuń Kłodawę w bok
-    modelKlodawa = glm::rotate(modelKlodawa, t / 4, glm::vec3(0, 1, 0)); // opcjonalny obrót
-
+    modelKlodawa = glm::translate(modelKlodawa, glm::vec3(-5.0f, 0.0f, 0.0f)); 
+    modelKlodawa = glm::rotate(modelKlodawa, t / 4, glm::vec3(0, 1, 0)); 
     glm::mat4 mvKlodawa = projekt * widok * modelKlodawa;
-
     glUniformMatrix4fv(transformLoc, 1, GL_FALSE, &mvKlodawa[0][0]);
     glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &modelKlodawa[0][0]);
-
+    glBindVertexArray(vao);
     glBindVertexArray(klodawaVao);
     glBindTexture(GL_TEXTURE_2D, teksturaKlodawa);
     glDrawArrays(GL_TRIANGLES, 0, klodawaVertices.size() / 11);
+
+
+
+
+
+
+
+
+
+
+    // -------- MELGIEW --------
+    glm::mat4 modelMelgiew = glm::mat4(1.0f);
+    modelMelgiew = glm::translate(modelMelgiew, glm::vec3(5.0f, 0.0f, 0.0f));
+    modelMelgiew = glm::rotate(modelMelgiew, t / 4, glm::vec3(0, 1, 0));
+    glm::mat4 mvMelgiew = projekt * widok * modelMelgiew;
+    glUniformMatrix4fv(transformLoc, 1, GL_FALSE, &mvMelgiew[0][0]);
+    glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &modelMelgiew[0][0]);
+    glBindVertexArray(melgiewVao);
+    glBindTexture(GL_TEXTURE_2D, teksturaMelgiew);
+    glDrawArrays(GL_TRIANGLES, 0, melgiewVertices.size() / 11);
+
+    // -------- ADAMOW --------
+    glm::mat4 modelAdamow = glm::mat4(1.0f);
+    modelAdamow = glm::translate(modelAdamow, glm::vec3(10.0f, 0.0f, 0.0f));
+    modelAdamow = glm::rotate(modelAdamow, t / 4, glm::vec3(0, 1, 0));
+    glm::mat4 mvAdamow = projekt * widok * modelAdamow;
+    glUniformMatrix4fv(transformLoc, 1, GL_FALSE, &mvAdamow[0][0]);
+    glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &modelAdamow[0][0]);
+    glBindVertexArray(adamowVao);
+    glBindTexture(GL_TEXTURE_2D, teksturaAdamow);
+    glDrawArrays(GL_TRIANGLES, 0, adamowVertices.size() / 11);
 
 
     glBindVertexArray(0);
@@ -178,6 +262,13 @@ void shutdown(GLFWwindow*) {
     glDeleteVertexArrays(1, &klodawaVao);
     glDeleteBuffers(1, &klodawaVbo);
     glDeleteTextures(1, &teksturaKlodawa);
+    glDeleteVertexArrays(1, &melgiewVao);
+    glDeleteBuffers(1, &melgiewVbo);
+    glDeleteTextures(1, &teksturaMelgiew);
+    glDeleteVertexArrays(1, &adamowVao);
+    glDeleteBuffers(1, &adamowVbo);
+    glDeleteTextures(1, &teksturaAdamow);
+
     loader.DeleteProgram(program);
 
 }
