@@ -1,12 +1,1 @@
-﻿  main.cpp
-C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\shared\minwindef.h(130,9): warning C4005: "APIENTRY": ponowna definicja makra
-  (kompilowanie pliku źródłowego „src/main.cpp”)
-      C:\Users\oskar\OneDrive\Pulpit\-MineralResourcesProject\dependencies\glfw-3.3.8.bin.WIN32\include\GLFW\glfw3.h(123,11):
-      zobacz poprzednią definicję „APIENTRY”
-  
-C:\Users\oskar\OneDrive\Pulpit\-MineralResourcesProject\cw 6\src\ex_6_1.hpp(463,35): warning C4244: "-=": konwersja z "double" do "float", możliwa utrata danych
-  (kompilowanie pliku źródłowego „src/main.cpp”)
-  
-Box.obj : warning LNK4075: zignorowano opcję „/EDITANDCONTINUE” z powodu określenia opcji „/INCREMENTAL:NO”
-LINK : warning LNK4098: domyślna biblioteka „MSVCRT” powoduje konflikt z innymi bibliotekami; użyj opcji /NODEFAULTLIB:biblioteka
-  grk-cw6.vcxproj -> C:\Users\oskar\OneDrive\Pulpit\-MineralResourcesProject\Debug\grk-cw6.exe
+﻿C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.WindowsSDK.targets(46,5): error MSB8036: Nie znaleziono zestawu Windows SDK w wersji 10.0.22621.0. Zainstaluj wymaganą wersję zestawu Windows SDK lub zmień wersję zestawu SDK na stronach właściwości projektu albo kliknij prawym przyciskiem myszy rozwiązanie i wybierz pozycję „Zmień platformę docelową rozwiązania”.

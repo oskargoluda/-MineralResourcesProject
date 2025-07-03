@@ -15,7 +15,7 @@ GLuint vao, vbo, program, tekstura;
 glm::vec3 kamera;
 glm::vec3 cel = glm::vec3(0.0f, 0.0f, 0.0f);
 float aspekt = 1.3f;
-int wybranaKostka = -1; // -1 oznacza brak wyboru
+int wybranaKostka =-1; // -1 oznacza brak wyboru
 
 GLuint modelVao, modelVbo;
 std::vector<float> modelVertices;
@@ -35,8 +35,11 @@ std::vector<float> melgiewGazVertices;
 GLuint adamowWegleVao, adamowWegleVbo;
 std::vector<float> adamowWegleVertices;
 
-GLuint teksturaBilbord;
-GLuint bilbordVao, bilbordVbo;
+GLuint teksturaBilbordLegnica, teksturaBilbordKlodawa, teksturaBilbordMelgiew, teksturaBilbordAdamow;
+GLuint bilbordLegnicaVao, bilbordLegnicaVbo;
+GLuint bilbordKlodawaVao, bilbordKlodawaVbo;
+GLuint bilbordMelgiewVao, bilbordMelgiewVbo;
+GLuint bilbordAdamowVao, bilbordAdamowVbo;
 std::vector<float> bilbordVertices;
 
 glm::vec3 celLegnica = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -45,10 +48,9 @@ glm::vec3 celMelgiew = glm::vec3(5.0f, 0.0f, 0.0f);
 glm::vec3 celAdamow = glm::vec3(10.0f, 0.0f, 0.0f);
 
 float cameraDistance = 2.0f;
-float cameraAzimuth = 45.0f;        // kat obrotu wokol obiektu
-float cameraElevation = 30.0f;      // kat pionowy 
+float cameraAzimuth = 45.0f;
+float cameraElevation = 30.0f;
 
-// ograniczenia kamery
 const float MIN_DISTANCE = 1.0f;
 const float MAX_DISTANCE = 4.0f;
 const float MIN_ELEVATION = -80.0f;
@@ -81,15 +83,52 @@ void init(GLFWwindow* win) {
         });
 
     glEnable(GL_DEPTH_TEST);
-    // ---- Blibord ----
+
+    // ---- Billboard Legnica-Glogow ----
     if (!loadObjModel("models/bilbord.obj", bilbordVertices)) {
-        std::cerr << "Nie udało się załadować modelu!" << std::endl;
+        std::cerr << "Nie udało się załadować modelu bilbordu!" << std::endl;
         exit(1);
     }
-    glGenVertexArrays(1, &bilbordVao);
-    glGenBuffers(1, &bilbordVbo);
-    glBindVertexArray(bilbordVao);
-    glBindBuffer(GL_ARRAY_BUFFER, bilbordVbo);
+    glGenVertexArrays(1, &bilbordLegnicaVao);
+    glGenBuffers(1, &bilbordLegnicaVbo);
+    glBindVertexArray(bilbordLegnicaVao);
+    glBindBuffer(GL_ARRAY_BUFFER, bilbordLegnicaVbo);
+    glBufferData(GL_ARRAY_BUFFER, bilbordVertices.size() * sizeof(float), bilbordVertices.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0); glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float))); glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float))); glEnableVertexAttribArray(2);
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(9 * sizeof(float))); glEnableVertexAttribArray(3);
+    glBindVertexArray(0);
+
+    // ---- Billboard Klodawa ----
+    glGenVertexArrays(1, &bilbordKlodawaVao);
+    glGenBuffers(1, &bilbordKlodawaVbo);
+    glBindVertexArray(bilbordKlodawaVao);
+    glBindBuffer(GL_ARRAY_BUFFER, bilbordKlodawaVbo);
+    glBufferData(GL_ARRAY_BUFFER, bilbordVertices.size() * sizeof(float), bilbordVertices.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0); glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float))); glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float))); glEnableVertexAttribArray(2);
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(9 * sizeof(float))); glEnableVertexAttribArray(3);
+    glBindVertexArray(0);
+
+    // ---- Billboard Melgiew ----
+    glGenVertexArrays(1, &bilbordMelgiewVao);
+    glGenBuffers(1, &bilbordMelgiewVbo);
+    glBindVertexArray(bilbordMelgiewVao);
+    glBindBuffer(GL_ARRAY_BUFFER, bilbordMelgiewVbo);
+    glBufferData(GL_ARRAY_BUFFER, bilbordVertices.size() * sizeof(float), bilbordVertices.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0); glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float))); glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float))); glEnableVertexAttribArray(2);
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(9 * sizeof(float))); glEnableVertexAttribArray(3);
+    glBindVertexArray(0);
+
+    // ---- Billboard Adamow ----
+    glGenVertexArrays(1, &bilbordAdamowVao);
+    glGenBuffers(1, &bilbordAdamowVbo);
+    glBindVertexArray(bilbordAdamowVao);
+    glBindBuffer(GL_ARRAY_BUFFER, bilbordAdamowVbo);
     glBufferData(GL_ARRAY_BUFFER, bilbordVertices.size() * sizeof(float), bilbordVertices.data(), GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0); glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float))); glEnableVertexAttribArray(1);
@@ -230,7 +269,10 @@ void init(GLFWwindow* win) {
     teksturaKlodawa = Core::LoadTexture("textures/Klodawa2.png");
     teksturaMelgiew = Core::LoadTexture("textures/Melgiew2.png");
     teksturaAdamow = Core::LoadTexture("textures/Adamow2.png");
-    teksturaBilbord = Core::LoadTexture("textures/AdamowOpis.png");
+    teksturaBilbordLegnica = Core::LoadTexture("textures/Legnica-GlogowOpis.png");
+    teksturaBilbordKlodawa = Core::LoadTexture("textures/KlodawaOpis.png");
+    teksturaBilbordMelgiew = Core::LoadTexture("textures/MielgiewOpis.png");
+    teksturaBilbordAdamow = Core::LoadTexture("textures/AdamowOpis.png");
 }
 
 void renderScene(GLFWwindow* win) {
@@ -291,7 +333,6 @@ void renderScene(GLFWwindow* win) {
     // ------------------ RENDER LEGNICA ---------------------
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::scale(model, glm::vec3(0.8f, 0.8f, 0.8f));
-    // model = glm::rotate(model, t / 4, glm::vec3(0, 1, 0)); // Mapy nadal się obracają
     glm::mat4 mv = projekt * widok * model;
     glUniformMatrix4fv(transformLoc, 1, GL_FALSE, &mv[0][0]);
     glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &model[0][0]);
@@ -305,7 +346,6 @@ void renderScene(GLFWwindow* win) {
     glm::mat4 copperModel = glm::mat4(1.0f);
     copperModel = glm::translate(copperModel, glm::vec3(0.0f, -0.11f, 0.0f));
     copperModel = glm::scale(copperModel, glm::vec3(0.05f, 0.05f, 0.05f));
-    // copperModel = glm::rotate(copperModel, t / 4, glm::vec3(0, 1, 0));
     glm::mat4 copperMv = projekt * widok * copperModel;
     glUniformMatrix4fv(transformLoc, 1, GL_FALSE, &copperMv[0][0]);
     glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &copperModel[0][0]);
@@ -319,7 +359,6 @@ void renderScene(GLFWwindow* win) {
     glm::mat4 modelKlodawa = glm::mat4(1.0f);
     modelKlodawa = glm::translate(modelKlodawa, glm::vec3(-5.0f, 0.0f, 0.0f));
     modelKlodawa = glm::scale(modelKlodawa, glm::vec3(0.8f, 0.8f, 0.8f));
-    // modelKlodawa = glm::rotate(modelKlodawa, t / 4, glm::vec3(0, 1, 0));
     glm::mat4 mvKlodawa = projekt * widok * modelKlodawa;
     glUniformMatrix4fv(transformLoc, 1, GL_FALSE, &mvKlodawa[0][0]);
     glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &modelKlodawa[0][0]);
@@ -333,7 +372,6 @@ void renderScene(GLFWwindow* win) {
     glm::mat4 saltModel = glm::mat4(1.0f);
     saltModel = glm::translate(saltModel, glm::vec3(-5.0f, -0.13f, 0.0f));
     saltModel = glm::scale(saltModel, glm::vec3(0.05f, 0.05f, 0.05f));
-    // saltModel = glm::rotate(saltModel, t / 4, glm::vec3(0, 1, 0)); 
     glm::mat4 saltMv = projekt * widok * saltModel;
     glUniformMatrix4fv(transformLoc, 1, GL_FALSE, &saltMv[0][0]);
     glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &saltModel[0][0]);
@@ -347,7 +385,6 @@ void renderScene(GLFWwindow* win) {
     glm::mat4 modelMelgiew = glm::mat4(1.0f);
     modelMelgiew = glm::translate(modelMelgiew, glm::vec3(5.0f, 0.0f, 0.0f));
     modelMelgiew = glm::scale(modelMelgiew, glm::vec3(0.8f, 0.8f, 0.8f));
-    // modelMelgiew = glm::rotate(modelMelgiew, t / 4, glm::vec3(0, 1, 0));
     glm::mat4 mvMelgiew = projekt * widok * modelMelgiew;
     glUniformMatrix4fv(transformLoc, 1, GL_FALSE, &mvMelgiew[0][0]);
     glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &modelMelgiew[0][0]);
@@ -361,7 +398,6 @@ void renderScene(GLFWwindow* win) {
     glm::mat4 gasModel = glm::mat4(1.0f);
     gasModel = glm::translate(gasModel, glm::vec3(5.0f, -0.09f, 0.0f));
     gasModel = glm::scale(gasModel, glm::vec3(0.05f, 0.05f, 0.05f));
-    // gasModel = glm::rotate(gasModel, t / 4, glm::vec3(0, 1, 0));
     glm::mat4 gasMv = projekt * widok * gasModel;
     glUniformMatrix4fv(transformLoc, 1, GL_FALSE, &gasMv[0][0]);
     glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &gasModel[0][0]);
@@ -375,7 +411,6 @@ void renderScene(GLFWwindow* win) {
     glm::mat4 modelAdamow = glm::mat4(1.0f);
     modelAdamow = glm::translate(modelAdamow, glm::vec3(10.0f, 0.0f, 0.0f));
     modelAdamow = glm::scale(modelAdamow, glm::vec3(0.8f, 0.8f, 0.8f));
-    // modelAdamow = glm::rotate(modelAdamow, t / 4, glm::vec3(0, 1, 0));
     glm::mat4 mvAdamow = projekt * widok * modelAdamow;
     glUniformMatrix4fv(transformLoc, 1, GL_FALSE, &mvAdamow[0][0]);
     glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &modelAdamow[0][0]);
@@ -385,11 +420,10 @@ void renderScene(GLFWwindow* win) {
     glBindTexture(GL_TEXTURE_2D, teksturaAdamow);
     glDrawArrays(GL_TRIANGLES, 0, adamowVertices.size() / 11);
 
-    // -------- RENDER ADAMOW ZLOZE WEGLA--------
+    // -------- RENDER ADAMOW ZLOZE WEGLA --------
     glm::mat4 coalModel = glm::mat4(1.0f);
     coalModel = glm::translate(coalModel, glm::vec3(10.0f, -0.09f, 0.0f));
     coalModel = glm::scale(coalModel, glm::vec3(0.05f, 0.05f, 0.05f));
-    // coalModel = glm::rotate(coalModel, t / 4, glm::vec3(0, 1, 0));
     glm::mat4 coalMv = projekt * widok * coalModel;
     glUniformMatrix4fv(transformLoc, 1, GL_FALSE, &coalMv[0][0]);
     glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &coalModel[0][0]);
@@ -399,23 +433,65 @@ void renderScene(GLFWwindow* win) {
     glBindTexture(GL_TEXTURE_2D, 0);
     glDrawArrays(GL_TRIANGLES, 0, adamowWegleVertices.size() / 11);
 
-    // ------------------ RENDER BILBORDU---------------------
+    // ------------------ RENDER BILBORDOW ---------------------
+    float textureAspect = 2.07f;
+    float scaleFactor = 0.8f;
 
-    glm::mat4 modelBilbord = glm::mat4(1.0f);
-    modelBilbord = glm::translate(modelBilbord, glm::vec3(0.05f, 0.2f, -0.8f));
-    float textureAspect = 2.07f; // szerokość/wysokość tekstury AdamowOpis.png
-    modelBilbord = glm::scale(modelBilbord, glm::vec3(0.08f * textureAspect, 0.08f, 0.08f));
-    // modelBilbord = glm::rotate(modelBilbord, t / 4, glm::vec3(0, 1, 0));
-    glm::mat4 mvBilbord = projekt * widok * modelBilbord;
-    glUniformMatrix4fv(transformLoc, 1, GL_FALSE, &mvBilbord[0][0]);
-    glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &modelBilbord[0][0]);
-    glUniform3f(baseColorLoc, 1.0f, 1.0f, 1.0f);
-    glUniform1i(useTextureLoc, 1);
-    glBindVertexArray(bilbordVao);
-    glBindTexture(GL_TEXTURE_2D, teksturaBilbord);
-    glDrawArrays(GL_TRIANGLES, 0, bilbordVertices.size() / 11);
+    glm::vec3 bilbordOffset = glm::vec3(0.0f, 0.1f, -1.5f);
+ 
 
-
+    if (wybranaKostka == 0) { // Legnica-Glogow
+        glm::mat4 modelBilbord = glm::mat4(1.0f);
+        modelBilbord = glm::translate(modelBilbord, glm::vec3(0.05f, 0.2f, -0.8f));
+        modelBilbord = glm::scale(modelBilbord, glm::vec3(scaleFactor * textureAspect, scaleFactor, scaleFactor));
+        glm::mat4 mvBilbord = projekt * widok * modelBilbord;
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, &mvBilbord[0][0]);
+        glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &modelBilbord[0][0]);
+        glUniform3f(baseColorLoc, 1.0f, 1.0f, 1.0f);
+        glUniform1i(useTextureLoc, 1);
+        glBindVertexArray(bilbordLegnicaVao);
+        glBindTexture(GL_TEXTURE_2D, teksturaBilbordLegnica);
+        glDrawArrays(GL_TRIANGLES, 0, bilbordVertices.size() / 11);
+    }
+    else if (wybranaKostka == 1) { // Klodawa
+        glm::mat4 modelBilbord = glm::mat4(1.0f);
+        modelBilbord = glm::translate(modelBilbord, celKlodawa + bilbordOffset);
+        modelBilbord = glm::scale(modelBilbord, glm::vec3(scaleFactor * textureAspect, scaleFactor, scaleFactor));
+        glm::mat4 mvBilbord = projekt * widok * modelBilbord;
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, &mvBilbord[0][0]);
+        glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &modelBilbord[0][0]);
+        glUniform3f(baseColorLoc, 1.0f, 1.0f, 1.0f);
+        glUniform1i(useTextureLoc, 1);
+        glBindVertexArray(bilbordKlodawaVao);
+        glBindTexture(GL_TEXTURE_2D, teksturaBilbordKlodawa);
+        glDrawArrays(GL_TRIANGLES, 0, bilbordVertices.size() / 11);
+    }
+    else if (wybranaKostka == 2) { // Melgiew
+        glm::mat4 modelBilbord = glm::mat4(1.0f);
+        modelBilbord = glm::translate(modelBilbord, celMelgiew + bilbordOffset);
+        modelBilbord = glm::scale(modelBilbord, glm::vec3(scaleFactor * textureAspect, scaleFactor, scaleFactor));
+        glm::mat4 mvBilbord = projekt * widok * modelBilbord;
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, &mvBilbord[0][0]);
+        glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &modelBilbord[0][0]);
+        glUniform3f(baseColorLoc, 1.0f, 1.0f, 1.0f);
+        glUniform1i(useTextureLoc, 1);
+        glBindVertexArray(bilbordMelgiewVao);
+        glBindTexture(GL_TEXTURE_2D, teksturaBilbordMelgiew);
+        glDrawArrays(GL_TRIANGLES, 0, bilbordVertices.size() / 11);
+    }
+    else if (wybranaKostka == 3) { // Adamow
+        glm::mat4 modelBilbord = glm::mat4(1.0f);
+        modelBilbord = glm::translate(modelBilbord, celAdamow + bilbordOffset);
+        modelBilbord = glm::scale(modelBilbord, glm::vec3(scaleFactor * textureAspect, scaleFactor, scaleFactor));
+        glm::mat4 mvBilbord = projekt * widok * modelBilbord;
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, &mvBilbord[0][0]);
+        glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &modelBilbord[0][0]);
+        glUniform3f(baseColorLoc, 1.0f, 1.0f, 1.0f);
+        glUniform1i(useTextureLoc, 1);
+        glBindVertexArray(bilbordAdamowVao);
+        glBindTexture(GL_TEXTURE_2D, teksturaBilbordAdamow);
+        glDrawArrays(GL_TRIANGLES, 0, bilbordVertices.size() / 11);
+    }
 
     glBindVertexArray(0);
     glUseProgram(0);
@@ -435,7 +511,6 @@ void shutdown(GLFWwindow*) {
     glDeleteVertexArrays(1, &adamowVao);
     glDeleteBuffers(1, &adamowVbo);
     glDeleteTextures(1, &teksturaAdamow);
-
     glDeleteVertexArrays(1, &glogowMiedzVao);
     glDeleteBuffers(1, &glogowMiedzVbo);
     glDeleteVertexArrays(1, &klodawaSolVao);
@@ -444,9 +519,18 @@ void shutdown(GLFWwindow*) {
     glDeleteBuffers(1, &melgiewGazVbo);
     glDeleteVertexArrays(1, &adamowWegleVao);
     glDeleteBuffers(1, &adamowWegleVbo);
-    glDeleteBuffers(1, &bilbordVbo);
-    glDeleteVertexArrays(1, &bilbordVao);
-    glDeleteBuffers(1, &bilbordVbo);
+    glDeleteVertexArrays(1, &bilbordLegnicaVao);
+    glDeleteBuffers(1, &bilbordLegnicaVbo);
+    glDeleteTextures(1, &teksturaBilbordLegnica);
+    glDeleteVertexArrays(1, &bilbordKlodawaVao);
+    glDeleteBuffers(1, &bilbordKlodawaVbo);
+    glDeleteTextures(1, &teksturaBilbordKlodawa);
+    glDeleteVertexArrays(1, &bilbordMelgiewVao);
+    glDeleteBuffers(1, &bilbordMelgiewVbo);
+    glDeleteTextures(1, &teksturaBilbordMelgiew);
+    glDeleteVertexArrays(1, &bilbordAdamowVao);
+    glDeleteBuffers(1, &bilbordAdamowVbo);
+    glDeleteTextures(1, &teksturaBilbordAdamow);
 
     loader.DeleteProgram(program);
 }
@@ -461,17 +545,13 @@ void processInput(GLFWwindow* win) {
     if (glfwGetKey(win, GLFW_KEY_4) == GLFW_PRESS) wybranaKostka = 3;
     glfwSetScrollCallback(win, [](GLFWwindow* window, double xoffset, double yoffset) {
         cameraDistance -= yoffset * CAMERA_ZOOM_SPEED;
-
-        // Ograniczenia
         if (cameraDistance < MIN_DISTANCE) cameraDistance = MIN_DISTANCE;
         if (cameraDistance > MAX_DISTANCE) cameraDistance = MAX_DISTANCE;
         });
 
-    // obrot wokol obiektu (lewo/prawo)
     if (glfwGetKey(win, GLFW_KEY_A) == GLFW_PRESS) cameraAzimuth -= CAMERA_ROTATION_SPEED;
     if (glfwGetKey(win, GLFW_KEY_D) == GLFW_PRESS) cameraAzimuth += CAMERA_ROTATION_SPEED;
 
-    // ruch w pionie (gora/dol)
     if (glfwGetKey(win, GLFW_KEY_W) == GLFW_PRESS) {
         cameraElevation += CAMERA_ELEVATION_SPEED;
         if (cameraElevation > MAX_ELEVATION) cameraElevation = MAX_ELEVATION;
@@ -481,7 +561,6 @@ void processInput(GLFWwindow* win) {
         if (cameraElevation < MIN_ELEVATION) cameraElevation = MIN_ELEVATION;
     }
 
-    // przyblizanie/oddalanie
     if (glfwGetKey(win, GLFW_KEY_Q) == GLFW_PRESS) {
         cameraDistance -= CAMERA_ZOOM_SPEED;
         if (cameraDistance < MIN_DISTANCE) cameraDistance = MIN_DISTANCE;
