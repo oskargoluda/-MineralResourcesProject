@@ -7,6 +7,7 @@ layout(location = 3) in vec2 inUV;
 
 uniform mat4 transformation;
 uniform mat4 modelMatrix;
+
 out vec3 fragPos;
 out vec3 fragNormal;
 out vec2 UV;

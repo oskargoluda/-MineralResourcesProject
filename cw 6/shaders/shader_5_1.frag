@@ -9,6 +9,9 @@ uniform vec3 lightDirs[6];
 uniform vec3 baseColor;
 uniform int useTexture;
 
+uniform int clippingEnabled;
+uniform vec4 clippingPlane;  // Ax + By + Cz + D = 0
+
 in vec3 fragPos;
 in vec3 fragNormal;
 in vec2 UV;
@@ -16,6 +19,14 @@ in vec2 UV;
 out vec4 outColor;
 
 void main() {
+
+    if (clippingEnabled == 1) {
+        float distance = dot(clippingPlane.xyz, fragPos) + clippingPlane.w;
+        if (distance < 0.0) {
+            discard; // jesli fragment jest po zlej stronie plaszczyzny to discard
+        }
+    }
+
     vec3 albedo;
     
     if (useTexture == 1) {

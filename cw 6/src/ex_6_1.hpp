@@ -1,21 +1,35 @@
-﻿#include "glew.h"
+﻿#pragma once
+
+#include "glew.h"
 #include "Shader_Loader.h"
 #include "gtc/matrix_transform.hpp"
 #include <GLFW/glfw3.h>
 #include "glm.hpp"
 #include "Texture.h"
-
 #include <vector>
 #include <cmath>
 #include "tiny_obj_loader.h"
 
 Core::Shader_Loader loader;
 GLuint vao, vbo, program, tekstura;
-
 glm::vec3 kamera;
 glm::vec3 cel = glm::vec3(0.0f, 0.0f, 0.0f);
 float aspekt = 1.3f;
-int wybranaKostka =-1; // -1 oznacza brak wyboru
+int wybranaKostka = -1; // -1 oznacza brak wyboru
+
+enum ClippingMode {
+    CLIPPING_OFF = 0,      
+    CLIPPING_TOP_DOWN = 1,
+    CLIPPING_LEFT_RIGHT = 2 
+};
+
+ClippingMode clippingMode = CLIPPING_OFF;
+float clippingPosition = 0.0f;       
+glm::vec4 clippingPlane = glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
+const float CLIPPING_SPEED = 0.0005f;
+
+const float ORBITAL_RADIUS = 1.2f;     // promien orbity billboardu
+const float BILLBOARD_HEIGHT_OFFSET = 0.5f; // wysokosc billboardu nad obiektem
 
 std::vector<float> createBillboardQuad() {
     return {
@@ -24,20 +38,12 @@ std::vector<float> createBillboardQuad() {
         -0.5f, -0.5f, 0.0f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,
          0.5f, -0.5f, 0.0f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f, 1.0f,   1.0f, 0.0f,
          0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f, 1.0f,   1.0f, 1.0f,
-
          // Trójkąt 2
          -0.5f, -0.5f, 0.0f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,
           0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f, 1.0f,   1.0f, 1.0f,
          -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f, 1.0f,   0.0f, 1.0f
     };
 }
-
-
-
-
-
-
-
 
 GLuint modelVao, modelVbo;
 std::vector<float> modelVertices;
@@ -56,7 +62,6 @@ GLuint melgiewGazVao, melgiewGazVbo;
 std::vector<float> melgiewGazVertices;
 GLuint adamowWegleVao, adamowWegleVbo;
 std::vector<float> adamowWegleVertices;
-
 GLuint teksturaBilbordLegnica, teksturaBilbordKlodawa, teksturaBilbordMelgiew, teksturaBilbordAdamow;
 GLuint bilbordLegnicaVao, bilbordLegnicaVbo;
 GLuint bilbordKlodawaVao, bilbordKlodawaVbo;
@@ -72,38 +77,87 @@ glm::vec3 celAdamow = glm::vec3(10.0f, 0.0f, 0.0f);
 float cameraDistance = 2.0f;
 float cameraAzimuth = 45.0f;
 float cameraElevation = 30.0f;
-
 const float MIN_DISTANCE = 1.0f;
-const float MAX_DISTANCE = 4.0f;
+const float MAX_DISTANCE = 2.5f;
 const float MIN_ELEVATION = -80.0f;
 const float MAX_ELEVATION = 80.0f;
-const float CAMERA_ROTATION_SPEED = 0.01f;
-const float CAMERA_ELEVATION_SPEED = 0.01f;
-const float CAMERA_ZOOM_SPEED = 0.05f;
+const float CAMERA_ROTATION_SPEED = 0.02f;
+const float CAMERA_ELEVATION_SPEED = 0.02f;
+const float CAMERA_ZOOM_SPEED = 0.02f;
 
 bool loadObjModel(const std::string& path, std::vector<float>& vertices);
 
 glm::vec3 calculateCameraPosition(const glm::vec3& target) {
     float azimuthRad = glm::radians(cameraAzimuth);
     float elevationRad = glm::radians(cameraElevation);
-
     float x = target.x + cameraDistance * cos(elevationRad) * cos(azimuthRad);
     float y = target.y + cameraDistance * sin(elevationRad);
     float z = target.z + cameraDistance * cos(elevationRad) * sin(azimuthRad);
-
     return glm::vec3(x, y, z);
+}
+
+glm::vec3 calculateOrbitalBillboardPosition(const glm::vec3& objectCenter,
+    const glm::vec3& cameraPos,
+    float orbitRadius = ORBITAL_RADIUS,
+    float heightOffset = BILLBOARD_HEIGHT_OFFSET) {
+    glm::vec3 toCamera = cameraPos - objectCenter;
+    toCamera.y = 0.0f;
+
+    if (glm::length(toCamera) < 0.001f) {
+        toCamera = glm::vec3(1.0f, 0.0f, 0.0f);
+    }
+    else {
+        toCamera = glm::normalize(toCamera);
+    }
+
+    glm::vec3 billboardDir = -toCamera;
+    glm::vec3 billboardPos = objectCenter + billboardDir * orbitRadius;
+    billboardPos.y = objectCenter.y + heightOffset;
+
+    return billboardPos;
+}
+
+glm::mat4 createBillboardMatrix(const glm::vec3& billboardPos, const glm::vec3& cameraPos, const glm::vec3& cameraUp = glm::vec3(0, 1, 0)) {
+    glm::vec3 look = glm::normalize(cameraPos - billboardPos);
+    glm::vec3 right = glm::normalize(glm::cross(cameraUp, look));
+    glm::vec3 up = glm::cross(look, right);
+    glm::mat4 billboardMatrix = glm::mat4(1.0f);
+    billboardMatrix[0] = glm::vec4(right, 0.0f);    // os X 
+    billboardMatrix[1] = glm::vec4(up, 0.0f);       // os Y
+    billboardMatrix[2] = glm::vec4(look, 0.0f);     // os z
+    billboardMatrix[3] = glm::vec4(billboardPos, 1.0f);
+    return billboardMatrix;
+}
+
+void updateClippingPlane() {
+    if (clippingMode == CLIPPING_TOP_DOWN) {
+        // plaszczyzna pozioma -  gora/dol
+        clippingPlane = glm::vec4(0.0f, 1.0f, 0.0f, -clippingPosition);
+    }
+    else if (clippingMode == CLIPPING_LEFT_RIGHT) {
+        // plszczyzna pionowa - lewo/prawo
+        float centerX = 0.0f; // domyslnie srodek
+        switch (wybranaKostka) {
+        case 0: centerX = celLegnica.x; break; 
+        case 1: centerX = celKlodawa.x; break; 
+        case 2: centerX = celMelgiew.x; break;  
+        case 3: centerX = celAdamow.x; break;   
+        default: centerX = 0.0f; break;         
+        }
+        // plaszczyzna przechodzi przez srodek aktualnego obiektu + offset
+        float planeX = centerX + clippingPosition;
+        clippingPlane = glm::vec4(1.0f, 0.0f, 0.0f, -planeX);
+    }
 }
 
 void init(GLFWwindow* win) {
     int w, h;
     glfwGetFramebufferSize(win, &w, &h);
     aspekt = w / float(h);
-
     glfwSetFramebufferSizeCallback(win, [](GLFWwindow*, int W, int H) {
         aspekt = W / float(H);
         glViewport(0, 0, W, H);
         });
-
     glEnable(GL_DEPTH_TEST);
 
     // ---- Billboard Legnica-Glogow ----
@@ -297,6 +351,10 @@ void init(GLFWwindow* win) {
 void renderScene(GLFWwindow* win) {
     float t = (float)glfwGetTime();
 
+    if (clippingMode != CLIPPING_OFF) {
+        updateClippingPlane();
+    }
+
     switch (wybranaKostka) {
     case 0:
         cel = celLegnica;
@@ -316,13 +374,10 @@ void renderScene(GLFWwindow* win) {
     }
 
     kamera = calculateCameraPosition(cel);
-
     glClearColor(0.4f, 0.4f, 0.4f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
     auto widok = glm::lookAt(kamera, cel, glm::vec3(0, 1, 0));
     auto projekt = glm::perspective(glm::radians(45.f), aspekt, 0.1f, 100.f);
-
     glUseProgram(program);
 
     GLuint transformLoc = glGetUniformLocation(program, "transformation");
@@ -335,6 +390,8 @@ void renderScene(GLFWwindow* win) {
     GLuint lightDirsLoc = glGetUniformLocation(program, "lightDirs");
     GLuint baseColorLoc = glGetUniformLocation(program, "baseColor");
     GLuint useTextureLoc = glGetUniformLocation(program, "useTexture");
+    GLuint clippingEnabledLoc = glGetUniformLocation(program, "clippingEnabled");
+    GLuint clippingPlaneLoc = glGetUniformLocation(program, "clippingPlane");
 
     glUniform3fv(cameraPosLoc, 1, &kamera[0]);
     glUniform3f(lightPosLoc, 0.0f, 1.0f, -0.5f);
@@ -348,6 +405,13 @@ void renderScene(GLFWwindow* win) {
     };
     glUniform1i(numLightsLoc, 6);
     glUniform3fv(lightDirsLoc, 6, &lightDirs[0][0]);
+
+    // przekazanie parametrow plaszczyzny do shadera
+    bool clippingActive = (clippingMode != CLIPPING_OFF);
+    glUniform1i(clippingEnabledLoc, clippingActive ? 1 : 0);
+    if (clippingActive) {
+        glUniform4fv(clippingPlaneLoc, 1, &clippingPlane[0]);
+    }
 
     // ------------------ RENDER LEGNICA ---------------------
     glm::mat4 model = glm::mat4(1.0f);
@@ -452,58 +516,70 @@ void renderScene(GLFWwindow* win) {
     glBindTexture(GL_TEXTURE_2D, 0);
     glDrawArrays(GL_TRIANGLES, 0, adamowWegleVertices.size() / 11);
 
-    // ------------------ RENDER BILBORDOW ---------------------
+    // ============ RENDER BILLBOARDY orbitralne ============
+    glUniform1i(clippingEnabledLoc, 0);
+
     float billboardWidth = 1.0f;
-    float billboardHeight = 0.6f; // Dostosuj proporcje do tekstury
+    float billboardHeight = 0.6f;
 
     if (wybranaKostka == 0) { // Legnica-Glogow
-        glm::mat4 modelBilbord = glm::mat4(1.0f);
-        modelBilbord = glm::translate(modelBilbord, glm::vec3(0.05f, 0.5f, -0.8f));
-        modelBilbord = glm::scale(modelBilbord, glm::vec3(billboardWidth, billboardHeight, 1.0f));
-        glm::mat4 mvBilbord = projekt * widok * modelBilbord;
+        // orbitralna pozycja billboardu
+        glm::vec3 billboardPos = calculateOrbitalBillboardPosition(celLegnica, kamera);
+        // macierz billboardu zwrocona do kamery
+        glm::mat4 billboardMatrix = createBillboardMatrix(billboardPos, kamera);
+        billboardMatrix = glm::scale(billboardMatrix, glm::vec3(billboardWidth, billboardHeight, 1.0f));
+
+        glm::mat4 mvBilbord = projekt * widok * billboardMatrix;
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, &mvBilbord[0][0]);
-        glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &modelBilbord[0][0]);
+        glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &billboardMatrix[0][0]);
         glUniform3f(baseColorLoc, 1.0f, 1.0f, 1.0f);
         glUniform1i(useTextureLoc, 1);
+
         glBindVertexArray(bilbordLegnicaVao);
         glBindTexture(GL_TEXTURE_2D, teksturaBilbordLegnica);
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
     else if (wybranaKostka == 1) { // Klodawa
-        glm::mat4 modelBilbord = glm::mat4(1.0f);
-        modelBilbord = glm::translate(modelBilbord, celKlodawa + glm::vec3(0.0f, 0.5f, -0.8f));
-        modelBilbord = glm::scale(modelBilbord, glm::vec3(billboardWidth, billboardHeight, 1.0f));
-        glm::mat4 mvBilbord = projekt * widok * modelBilbord;
+        glm::vec3 billboardPos = calculateOrbitalBillboardPosition(celKlodawa, kamera);
+        glm::mat4 billboardMatrix = createBillboardMatrix(billboardPos, kamera);
+        billboardMatrix = glm::scale(billboardMatrix, glm::vec3(billboardWidth, billboardHeight, 1.0f));
+
+        glm::mat4 mvBilbord = projekt * widok * billboardMatrix;
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, &mvBilbord[0][0]);
-        glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &modelBilbord[0][0]);
+        glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &billboardMatrix[0][0]);
         glUniform3f(baseColorLoc, 1.0f, 1.0f, 1.0f);
         glUniform1i(useTextureLoc, 1);
+
         glBindVertexArray(bilbordKlodawaVao);
         glBindTexture(GL_TEXTURE_2D, teksturaBilbordKlodawa);
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
     else if (wybranaKostka == 2) { // Melgiew
-        glm::mat4 modelBilbord = glm::mat4(1.0f);
-        modelBilbord = glm::translate(modelBilbord, celMelgiew + glm::vec3(0.0f, 0.5f, -0.8f));
-        modelBilbord = glm::scale(modelBilbord, glm::vec3(billboardWidth, billboardHeight, 1.0f));
-        glm::mat4 mvBilbord = projekt * widok * modelBilbord;
+        glm::vec3 billboardPos = calculateOrbitalBillboardPosition(celMelgiew, kamera);
+        glm::mat4 billboardMatrix = createBillboardMatrix(billboardPos, kamera);
+        billboardMatrix = glm::scale(billboardMatrix, glm::vec3(billboardWidth, billboardHeight, 1.0f));
+
+        glm::mat4 mvBilbord = projekt * widok * billboardMatrix;
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, &mvBilbord[0][0]);
-        glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &modelBilbord[0][0]);
+        glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &billboardMatrix[0][0]);
         glUniform3f(baseColorLoc, 1.0f, 1.0f, 1.0f);
         glUniform1i(useTextureLoc, 1);
+
         glBindVertexArray(bilbordMelgiewVao);
         glBindTexture(GL_TEXTURE_2D, teksturaBilbordMelgiew);
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
     else if (wybranaKostka == 3) { // Adamow
-        glm::mat4 modelBilbord = glm::mat4(1.0f);
-        modelBilbord = glm::translate(modelBilbord, celAdamow + glm::vec3(0.0f, 0.5f, -0.8f));
-        modelBilbord = glm::scale(modelBilbord, glm::vec3(billboardWidth, billboardHeight, 1.0f));
-        glm::mat4 mvBilbord = projekt * widok * modelBilbord;
+        glm::vec3 billboardPos = calculateOrbitalBillboardPosition(celAdamow, kamera);
+        glm::mat4 billboardMatrix = createBillboardMatrix(billboardPos, kamera);
+        billboardMatrix = glm::scale(billboardMatrix, glm::vec3(billboardWidth, billboardHeight, 1.0f));
+
+        glm::mat4 mvBilbord = projekt * widok * billboardMatrix;
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, &mvBilbord[0][0]);
-        glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &modelBilbord[0][0]);
+        glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &billboardMatrix[0][0]);
         glUniform3f(baseColorLoc, 1.0f, 1.0f, 1.0f);
         glUniform1i(useTextureLoc, 1);
+
         glBindVertexArray(bilbordAdamowVao);
         glBindTexture(GL_TEXTURE_2D, teksturaBilbordAdamow);
         glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -547,27 +623,60 @@ void shutdown(GLFWwindow*) {
     glDeleteVertexArrays(1, &bilbordAdamowVao);
     glDeleteBuffers(1, &bilbordAdamowVbo);
     glDeleteTextures(1, &teksturaBilbordAdamow);
-
     loader.DeleteProgram(program);
 }
 
 void processInput(GLFWwindow* win) {
     if (glfwGetKey(win, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(win, true);
-
     if (glfwGetKey(win, GLFW_KEY_1) == GLFW_PRESS) wybranaKostka = 0;
     if (glfwGetKey(win, GLFW_KEY_2) == GLFW_PRESS) wybranaKostka = 1;
     if (glfwGetKey(win, GLFW_KEY_3) == GLFW_PRESS) wybranaKostka = 2;
     if (glfwGetKey(win, GLFW_KEY_4) == GLFW_PRESS) wybranaKostka = 3;
+
+    static bool cKeyPressed = false;
+
+    // tryby: OFF -> TOP-DOWN -> LEFT-RIGHT -> OFF
+    if (glfwGetKey(win, GLFW_KEY_C) == GLFW_PRESS && !cKeyPressed) {
+        cKeyPressed = true;
+        clippingMode = static_cast<ClippingMode>((clippingMode + 1) % 3);
+        clippingPosition = 0.0f; // reset pozycji przy zmianie tryu
+
+        switch (clippingMode) {
+        case CLIPPING_OFF:
+            std::cout << "Clipping: OFF" << std::endl;
+            break;
+        case CLIPPING_TOP_DOWN:
+            std::cout << "Clipping: TOP-DOWN (vertical cross-section)" << std::endl;
+            break;
+        case CLIPPING_LEFT_RIGHT:
+            std::cout << "Clipping: LEFT-RIGHT (horizontal cross-section)" << std::endl;
+            break;
+        }
+    }
+
+    if (glfwGetKey(win, GLFW_KEY_C) == GLFW_RELEASE) {
+        cKeyPressed = false;
+    }
+
+    // kontrola plaszczyzny tnacej
+    if (clippingMode != CLIPPING_OFF) {
+        if (glfwGetKey(win, GLFW_KEY_R) == GLFW_PRESS) {
+            clippingPosition += CLIPPING_SPEED; 
+        }
+        if (glfwGetKey(win, GLFW_KEY_F) == GLFW_PRESS) {
+            clippingPosition -= CLIPPING_SPEED;
+        }
+    }
+
     glfwSetScrollCallback(win, [](GLFWwindow* window, double xoffset, double yoffset) {
         cameraDistance -= yoffset * CAMERA_ZOOM_SPEED;
         if (cameraDistance < MIN_DISTANCE) cameraDistance = MIN_DISTANCE;
         if (cameraDistance > MAX_DISTANCE) cameraDistance = MAX_DISTANCE;
         });
 
-    if (glfwGetKey(win, GLFW_KEY_A) == GLFW_PRESS) cameraAzimuth -= CAMERA_ROTATION_SPEED;
-    if (glfwGetKey(win, GLFW_KEY_D) == GLFW_PRESS) cameraAzimuth += CAMERA_ROTATION_SPEED;
-
+    if (glfwGetKey(win, GLFW_KEY_D) == GLFW_PRESS) cameraAzimuth -= CAMERA_ROTATION_SPEED;
+    if (glfwGetKey(win, GLFW_KEY_A) == GLFW_PRESS) cameraAzimuth += CAMERA_ROTATION_SPEED;
     if (glfwGetKey(win, GLFW_KEY_W) == GLFW_PRESS) {
         cameraElevation += CAMERA_ELEVATION_SPEED;
         if (cameraElevation > MAX_ELEVATION) cameraElevation = MAX_ELEVATION;
@@ -576,7 +685,6 @@ void processInput(GLFWwindow* win) {
         cameraElevation -= CAMERA_ELEVATION_SPEED;
         if (cameraElevation < MIN_ELEVATION) cameraElevation = MIN_ELEVATION;
     }
-
     if (glfwGetKey(win, GLFW_KEY_Q) == GLFW_PRESS) {
         cameraDistance -= CAMERA_ZOOM_SPEED;
         if (cameraDistance < MIN_DISTANCE) cameraDistance = MIN_DISTANCE;
@@ -585,7 +693,6 @@ void processInput(GLFWwindow* win) {
         cameraDistance += CAMERA_ZOOM_SPEED;
         if (cameraDistance > MAX_DISTANCE) cameraDistance = MAX_DISTANCE;
     }
-
     if (cameraAzimuth >= 360.0f) cameraAzimuth -= 360.0f;
     if (cameraAzimuth < 0.0f) cameraAzimuth += 360.0f;
 }
@@ -634,6 +741,5 @@ bool loadObjModel(const std::string& path, std::vector<float>& vertices) {
             vertices.insert(vertices.end(), { uv.x, uv.y });
         }
     }
-
     return true;
 }
