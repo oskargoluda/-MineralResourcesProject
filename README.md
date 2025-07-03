@@ -53,3 +53,8 @@ Uruchom w Visual Studio 2022
 - **C** – Przełączanie między trybami (OFF, TOP-DOWN, LEFT-RIGHT)  
 - **R / F** – Przesuwanie płaszczyzny przycinania w trybie aktywnym  
 - **ESC** – Wyjście z programu
+![image](https://github.com/user-attachments/assets/7291db98-2bb9-49ae-9e0a-f55519b17762)
+![image](https://github.com/user-attachments/assets/019cdbe7-f124-41a7-8f9d-7ed509b4354d)
+![image](https://github.com/user-attachments/assets/39158dda-e6d3-4efb-b84b-1757c66d1636)
+![image](https://github.com/user-attachments/assets/a3ec9b85-faf2-4b86-8890-992d6f84ecba)
+
