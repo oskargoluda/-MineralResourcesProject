@@ -17,6 +17,28 @@ glm::vec3 cel = glm::vec3(0.0f, 0.0f, 0.0f);
 float aspekt = 1.3f;
 int wybranaKostka =-1; // -1 oznacza brak wyboru
 
+std::vector<float> createBillboardQuad() {
+    return {
+        // Pozycja (x,y,z), Kolor (r,g,b), Normala (nx,ny,nz), UV (u,v)
+        // Trójkąt 1
+        -0.5f, -0.5f, 0.0f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,
+         0.5f, -0.5f, 0.0f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f, 1.0f,   1.0f, 0.0f,
+         0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f, 1.0f,   1.0f, 1.0f,
+
+         // Trójkąt 2
+         -0.5f, -0.5f, 0.0f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,
+          0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f, 1.0f,   1.0f, 1.0f,
+         -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f, 1.0f,   0.0f, 1.0f
+    };
+}
+
+
+
+
+
+
+
+
 GLuint modelVao, modelVbo;
 std::vector<float> modelVertices;
 GLuint klodawaVao, klodawaVbo;
@@ -85,10 +107,7 @@ void init(GLFWwindow* win) {
     glEnable(GL_DEPTH_TEST);
 
     // ---- Billboard Legnica-Glogow ----
-    if (!loadObjModel("models/bilbord.obj", bilbordVertices)) {
-        std::cerr << "Nie udało się załadować modelu bilbordu!" << std::endl;
-        exit(1);
-    }
+    bilbordVertices = createBillboardQuad();
     glGenVertexArrays(1, &bilbordLegnicaVao);
     glGenBuffers(1, &bilbordLegnicaVbo);
     glBindVertexArray(bilbordLegnicaVao);
@@ -434,16 +453,13 @@ void renderScene(GLFWwindow* win) {
     glDrawArrays(GL_TRIANGLES, 0, adamowWegleVertices.size() / 11);
 
     // ------------------ RENDER BILBORDOW ---------------------
-    float textureAspect = 2.07f;
-    float scaleFactor = 0.8f;
-
-    glm::vec3 bilbordOffset = glm::vec3(0.0f, 0.1f, -1.5f);
- 
+    float billboardWidth = 1.0f;
+    float billboardHeight = 0.6f; // Dostosuj proporcje do tekstury
 
     if (wybranaKostka == 0) { // Legnica-Glogow
         glm::mat4 modelBilbord = glm::mat4(1.0f);
-        modelBilbord = glm::translate(modelBilbord, glm::vec3(0.05f, 0.2f, -0.8f));
-        modelBilbord = glm::scale(modelBilbord, glm::vec3(scaleFactor * textureAspect, scaleFactor, scaleFactor));
+        modelBilbord = glm::translate(modelBilbord, glm::vec3(0.05f, 0.5f, -0.8f));
+        modelBilbord = glm::scale(modelBilbord, glm::vec3(billboardWidth, billboardHeight, 1.0f));
         glm::mat4 mvBilbord = projekt * widok * modelBilbord;
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, &mvBilbord[0][0]);
         glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &modelBilbord[0][0]);
@@ -451,12 +467,12 @@ void renderScene(GLFWwindow* win) {
         glUniform1i(useTextureLoc, 1);
         glBindVertexArray(bilbordLegnicaVao);
         glBindTexture(GL_TEXTURE_2D, teksturaBilbordLegnica);
-        glDrawArrays(GL_TRIANGLES, 0, bilbordVertices.size() / 11);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
     }
     else if (wybranaKostka == 1) { // Klodawa
         glm::mat4 modelBilbord = glm::mat4(1.0f);
-        modelBilbord = glm::translate(modelBilbord, celKlodawa + bilbordOffset);
-        modelBilbord = glm::scale(modelBilbord, glm::vec3(scaleFactor * textureAspect, scaleFactor, scaleFactor));
+        modelBilbord = glm::translate(modelBilbord, celKlodawa + glm::vec3(0.0f, 0.5f, -0.8f));
+        modelBilbord = glm::scale(modelBilbord, glm::vec3(billboardWidth, billboardHeight, 1.0f));
         glm::mat4 mvBilbord = projekt * widok * modelBilbord;
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, &mvBilbord[0][0]);
         glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &modelBilbord[0][0]);
@@ -464,12 +480,12 @@ void renderScene(GLFWwindow* win) {
         glUniform1i(useTextureLoc, 1);
         glBindVertexArray(bilbordKlodawaVao);
         glBindTexture(GL_TEXTURE_2D, teksturaBilbordKlodawa);
-        glDrawArrays(GL_TRIANGLES, 0, bilbordVertices.size() / 11);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
     }
     else if (wybranaKostka == 2) { // Melgiew
         glm::mat4 modelBilbord = glm::mat4(1.0f);
-        modelBilbord = glm::translate(modelBilbord, celMelgiew + bilbordOffset);
-        modelBilbord = glm::scale(modelBilbord, glm::vec3(scaleFactor * textureAspect, scaleFactor, scaleFactor));
+        modelBilbord = glm::translate(modelBilbord, celMelgiew + glm::vec3(0.0f, 0.5f, -0.8f));
+        modelBilbord = glm::scale(modelBilbord, glm::vec3(billboardWidth, billboardHeight, 1.0f));
         glm::mat4 mvBilbord = projekt * widok * modelBilbord;
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, &mvBilbord[0][0]);
         glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &modelBilbord[0][0]);
@@ -477,12 +493,12 @@ void renderScene(GLFWwindow* win) {
         glUniform1i(useTextureLoc, 1);
         glBindVertexArray(bilbordMelgiewVao);
         glBindTexture(GL_TEXTURE_2D, teksturaBilbordMelgiew);
-        glDrawArrays(GL_TRIANGLES, 0, bilbordVertices.size() / 11);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
     }
     else if (wybranaKostka == 3) { // Adamow
         glm::mat4 modelBilbord = glm::mat4(1.0f);
-        modelBilbord = glm::translate(modelBilbord, celAdamow + bilbordOffset);
-        modelBilbord = glm::scale(modelBilbord, glm::vec3(scaleFactor * textureAspect, scaleFactor, scaleFactor));
+        modelBilbord = glm::translate(modelBilbord, celAdamow + glm::vec3(0.0f, 0.5f, -0.8f));
+        modelBilbord = glm::scale(modelBilbord, glm::vec3(billboardWidth, billboardHeight, 1.0f));
         glm::mat4 mvBilbord = projekt * widok * modelBilbord;
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, &mvBilbord[0][0]);
         glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, &modelBilbord[0][0]);
@@ -490,7 +506,7 @@ void renderScene(GLFWwindow* win) {
         glUniform1i(useTextureLoc, 1);
         glBindVertexArray(bilbordAdamowVao);
         glBindTexture(GL_TEXTURE_2D, teksturaBilbordAdamow);
-        glDrawArrays(GL_TRIANGLES, 0, bilbordVertices.size() / 11);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 
     glBindVertexArray(0);
